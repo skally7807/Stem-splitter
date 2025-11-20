@@ -1,0 +1,4 @@
+data/
+.venv/
+*.mp3
+*.wav
