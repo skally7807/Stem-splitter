@@ -1,7 +1,5 @@
-import os
 import librosa
 import numpy as np
-import matplotlib.pyplot as plt
 
 def audio_to_spectrogram(y, n_fft=2048, hop_length=512):
     """
@@ -60,50 +58,3 @@ def slice_spectrogram(magnitude, patch_width=32):
             patches.append(patch)
             
     return patches
-
-def save_spectrogram_image(spectrogram, file_path):
-    """
-    스펙트로그램(또는 조각)을 이미지 파일로 저장합니다.
-    사람이 보기 좋게 데시벨(dB) 스케일로 변환하여 저장합니다.
-    """
-    # 선형 스케일 -> 데시벨(dB) 스케일로 변환 (로그 변환)
-    # 이렇게 하면 작은 소리도 더 밝게 잘 보입니다.
-    spectrogram_db = librosa.amplitude_to_db(spectrogram, ref=np.max)
-
-    plt.figure(figsize=(4, 4))
-    # origin='lower'는 저주파가 아래쪽에 오게 함
-    # aspect='auto'는 픽셀을 정사각형으로 강제하지 않음
-    plt.imshow(spectrogram_db, aspect='auto', origin='lower', cmap='magma')
-    plt.axis('off') # 축과 라벨 숨김
-    plt.tight_layout()
-    plt.savefig(file_path)
-    plt.close()
-
-# --- 테스트 코드 (이 파일만 실행 시 작동) ---
-if __name__ == "__main__":
-    # 테스트용 더미 데이터 생성
-    print("유틸리티 테스트 중...")
-    dummy_audio = np.random.rand(22050 * 5) # 5초짜리 랜덤 노이즈
-    
-    # 1. 변환 테스트
-    mag, phase = audio_to_spectrogram(dummy_audio)
-    print(f"스펙트로그램 변환 완료. 크기: {mag.shape}")
-    
-    # 2. 슬라이싱 테스트
-    patches = slice_spectrogram(mag, patch_width=32)
-    print(f"패치 슬라이싱 완료. 생성된 조각 수: {len(patches)}개")
-    print(f"   조각 크기: {patches[0].shape}")
-
-    # 3. 저장 테스트
-    output_dir = "test_outputs"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-        
-    print(f"\n이미지 저장 테스트 중... ('{output_dir}' 폴더 확인)")
-    # 처음 5개 조각만 저장해봅니다
-    for i, patch in enumerate(patches[:5]):
-        save_path = os.path.join(output_dir, f"patch_{i}.png")
-        save_spectrogram_image(patch, save_path)
-        print(f"  Saved: {save_path}")
-        
-    print("완료! 폴더를 확인해보세요.")
