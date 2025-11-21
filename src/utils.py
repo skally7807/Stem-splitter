@@ -58,3 +58,22 @@ def slice_spectrogram(magnitude, patch_width=32):
             patches.append(patch)
             
     return patches
+
+def compute_soft_mask(mixture_mag, piano_mag, epsilon=1e-8):
+    """
+    원본(Mixture) 대비 피아노(Piano)의 에너지 비율을 계산하여 Soft Mask를 생성합니다.
+    
+    Args:
+        mixture_mag: 원본 오디오의 스펙트로그램 (Magnitude)
+        piano_mag: 피아노 오디오의 스펙트로그램 (Magnitude)
+        epsilon: 0으로 나누는 것을 방지하기 위한 작은 값
+        
+    Returns:
+        mask: 0.0 ~ 1.0 사이의 값을 가지는 마스크 (비율)
+    """
+    # 비율 계산: Piano / (Mixture + epsilon)
+    # 값이 1.0을 넘지 않도록 클리핑 (노이즈 등으로 인해 피아노가 더 클 수도 있음)
+    mask = piano_mag / (mixture_mag + epsilon)
+    mask = np.clip(mask, 0.0, 1.0)
+    
+    return mask
