@@ -2,3 +2,6 @@ data/
 .venv/
 *.mp3
 *.wav
+.python-version
+uv.lock
+pyproject.toml
