@@ -2,7 +2,7 @@
 import librosa
 import numpy as np
 from .config import SAMPLE_RATE, N_FFT, HOP_LENGTH
-from stft import stft   
+from src.stft import stft   
 
 """
 - 오디오 파일(mp3/wav) 하나 로드
