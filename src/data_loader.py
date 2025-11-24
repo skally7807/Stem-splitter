@@ -1,6 +1,47 @@
 import os
 import librosa
 import numpy as np
+import warnings
+import imageio_ffmpeg
+from pydub import AudioSegment
+
+# ffmpeg 경로 설정 (librosa가 찾을 수 있도록)
+ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+os.environ['PATH'] += os.pathsep + os.path.dirname(ffmpeg_path)
+
+# pydub에도 ffmpeg 경로 알려주기
+AudioSegment.converter = ffmpeg_path
+AudioSegment.ffmpeg = ffmpeg_path
+AudioSegment.ffprobe = ffmpeg_path
+
+# 경고 메시지 무시 (너무 많이 떠서)
+warnings.filterwarnings('ignore')
+
+def load_audio_robust(path, sr=22050, duration=None):
+    """
+    librosa로 로드 시도 후 실패하면 pydub으로 재시도하는 함수
+    """
+    try:
+        # 1차 시도: librosa (빠름)
+        y, _ = librosa.load(path, sr=sr, mono=True, duration=duration)
+        return y
+    except Exception as e:
+        # 2차 시도: pydub (강력함)
+        try:
+            # pydub은 ffmpeg를 직접 사용하므로 더 강력함
+            audio = AudioSegment.from_file(path)
+            if duration:
+                audio = audio[:int(duration*1000)] # pydub은 밀리초 단위
+            
+            # 샘플 레이트 변환 및 모노 변환
+            audio = audio.set_frame_rate(sr).set_channels(1)
+            
+            # numpy 배열로 변환 (int16 -> float32 정규화)
+            y = np.array(audio.get_array_of_samples()).astype(np.float32) / 32768.0
+            return y
+        except Exception as e2:
+            # 둘 다 실패하면 에러 던짐
+            raise e2
 
 def load_paired_dataset(data_dir='data', sr=22050, duration=None):
     """
@@ -54,14 +95,20 @@ def load_paired_dataset(data_dir='data', sr=22050, duration=None):
             continue
             
         try:
-            # librosa로 로드
-            # duration을 설정하면 앞부분만 잘라서 로드하므로 속도가 빨라짐
-            y_mixed, _ = librosa.load(mixed_path, sr=sr, mono=True, duration=duration)
-            y_target, _ = librosa.load(target_path, sr=sr, mono=True, duration=duration)
+            # load_audio_robust 함수 사용
+            y_mixed = load_audio_robust(mixed_path, sr=sr, duration=duration)
+            y_target = load_audio_robust(target_path, sr=sr, duration=duration)
+            
+            # 길이 맞추기
             min_len = min(len(y_mixed), len(y_target))
             y_mixed = y_mixed[:min_len]
             y_target = y_target[:min_len]
             
+            # 너무 짧은 파일은 버림 (1초 미만)
+            if min_len < sr:
+                print(f"건너뜀: '{filename}' 파일이 너무 짧습니다.")
+                continue
+
             mixed_list.append(y_mixed)
             target_list.append(y_target)
             
@@ -69,6 +116,8 @@ def load_paired_dataset(data_dir='data', sr=22050, duration=None):
             
         except Exception as e:
             print(f"에러 발생 ({filename}): {e}")
+            print("  -> 이 파일은 건너뜁니다.")
+            continue
             
     print(f"학습 데이터 준비 완료: 총 {len(mixed_list)}쌍")
     return mixed_list, target_list
