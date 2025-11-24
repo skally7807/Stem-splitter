@@ -8,8 +8,8 @@ from features import extract_features
 def train():
     # 1. 데이터 불러오기
     print("데이터를 불러옵니다...")
-    # 너무 길면 오래 걸리니까 30초만 사용
-    X_list, Y_list = load_paired_dataset(duration=30.0)
+    # 전체 데이터 사용 (None)
+    X_list, Y_list = load_paired_dataset(duration=None)
 
     if len(X_list) == 0:
         print("데이터가 없어서 종료합니다.")
