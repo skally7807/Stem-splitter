@@ -1,11 +1,6 @@
 import numpy as np
 import librosa
 import soundfile as sf
-import sys
-import os
-
-# 모듈 경로 설정 (필요시)
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from .spatial import extract_side_channel
 from .filter import bandpass_filter
