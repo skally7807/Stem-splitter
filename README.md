@@ -14,6 +14,18 @@
 2. FX Preprocessing (세션별 전처리 / 이펙터 체인 적용)
 작성 예정
 
+## 사용 기술 및 라이선스 (Built With & Licenses)
+
+본 프로젝트는 고성능 음원 분리와 오디오 신호 처리를 위해 다음의 오픈 소스 라이브러리를 활용하였다.
+
+| Component | Library | Model / Version | License | Note |
+| :--- | :--- | :--- | :--- | :--- |
+| **Source Separation** | [Demucs](https://github.com/facebookresearch/demucs) (Meta Research) | `htdemucs_6s` | MIT License | 6-stem 분리(Guitar 포함) 사용 |
+| **Audio Effects** | [Pedalboard](https://github.com/spotify/pedalboard) (Spotify) | Latest | **GPL-3.0** | VST/AU 플러그인 기반 이펙트 처리 |
+| **Audio I/O** | Librosa / SoundFile | - | ISC / BSD | 오디오 입출력 및 전처리 |
+
+> **License Notice**: 본 프로젝트는 **GPL-3.0** 라이선스를 따르는 `spotify/pedalboard`를 포함하고 있으므로, 전체 프로젝트 또한 GPL-3.0 라이선스 정책을 준수함.
+
 ## 세션별 전처리 모듈
 
 각 섹션에서는 세션의 고유한 음향적 특성을 기반으로 어떤 preprocessing filter를 설계했는지를 설명한다.
@@ -37,18 +49,7 @@
 이 때문에 보컬 배음은 스펙트로그램에서 “파도처럼 이어지는” 부드러운 수평 패턴을 형성한다.
 
 ## 일렉 기타 (담당자: 김상봉)
-본 모듈은 혼합된 밴드 믹스 오디오에서 일렉기타 사운드를 분리하기 위해 설계된 스펙트로그램 기반 전처리 필터 코드이다.
 
-기획 의도
-일렉기타는 스펙트로그램 상에서 다음과 같은 고유한 텍스처 패턴을 가짐:
-
-넓게 퍼진 배음 구조
-디스토션/오버드라이브 시 배음이 넓게 뭉쳐 보이고 깨끗한 악기들과는 달리 두꺼운 연속선 형태를 띰.
-피킹 어택과 고주파
-프레이즈 시작 순간, 짧고 강한 고주파 burst가 발생함.
-프레이즈 기반 시간적 연속성
-기타 라인은 일정한 주파수 흐름과 지속적인 배음 텍스처를 가지며 안정적인 줄무늬 패턴을 형성함.
-이러한 텍스처는 이미지 영역에서의 패턴으로 변환 가능함. 따라서 본 필터는 스펙트로그램을 이미지처럼 다루어 각 이미지 조각이 기타 텍스처에 얼마나 근접한지를 정량적으로 평가하여 기타 전용 소프트 마스크를 생성하는 것을 목표로 한다.
 
 ## 베이스 (담당자: 유지성)
 
