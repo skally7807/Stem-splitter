@@ -49,7 +49,34 @@
 이 때문에 보컬 배음은 스펙트로그램에서 “파도처럼 이어지는” 부드러운 수평 패턴을 형성한다.
 
 ## 일렉 기타 (담당자: 김상봉)
+### 처리 개요 (Processing Overview)
+전체 파이프라인은 **[Source Seperation] -> [Effect Chain Application]** 의 단계를 거친다.
 
+1. **[공통과정]전처리 (Pre-processing)**: `seperator.py`를 통해 `hydemucs_6s` 모델이 원본 오디오를 각 세션에 맞는 Stem 으로 분리하며, 본 모듈은 그중 `guitar` 트랙을 입력으로 사용한다.
+2. **이펙팅 (Effecting)**: `pedalboard` 라이브러리를 사용하여, 가상의 페달보드를 구성하고 직렬(Series)로 신호를 처리한다.
+
+### 이펙트 체인 명세 (Effect Chain Specification)
+
+본 세션에서 설계한 페달보드 구성은 다음과 같다. 아래 표에 명시된 값은 **기본 설정값(Default)**이며, 사용 목적에 따라 수정, 랜덤화가 가능함.
+
+| 순서 | 이펙터 (Effect Unit) | 주요 설정 (Key Parameters) | 음향적 의도 (Tonal Function) |
+| :--- | :--- | :--- | :--- |
+| **1** | **Noise Gate** | `threshold_db`: -60dB | 음원 분리 과정에서 발생할 수 있는 아티팩트 및 배경 노이즈 제거 |
+| **2** | **Compressor** | `ratio`: 4:1, `attack`: 10ms | 다이내믹 레인지를 평탄화하여 단단한 피킹 뉘앙스 강조 |
+| **3** | **Distortion** | `drive_db`: 12dB | 크런치(Crunch) 톤 형성 및 배음(Harmonics) 강조를 통한 존재감 부각 |
+| **4** | **Chorus** | `rate_hz`: 1.2Hz, `depth`: 0.3 | 스테레오 이미지를 확장하고 몽환적인 공간감 부여 |
+| **5** | **Reverb** | `room_size`: 0.4, `wet_level`: 0.3 | 소규모 클럽 공간의 자연스러운 잔향(Ambience) 시뮬레이션 |
+| **6** | **Limiter** | `threshold_db`: -1.0dB | 최종 출력 레벨 클리핑(Clipping) 방지 및 안전성 확보 |
+
+### 파라미터 커스터마이징 및 랜덤화 (Configuration & Randomization)
+
+본 모듈은 **데이터 증강(Data Augmentation)**을 위한 동적 파라미터 조정을 지원한다.
+
+1. **사용자 정의 (User Customization)**:
+    - 위에서 명시된 주요 파라미터(`drive_db`, `room_size` 등)는 함수 호출 시 인자(Arguments)를 통해 직접 수정할 수 있다.
+2. **랜덤화 및 노이즈 주입 (Randomization & Noise Injection)**:
+    - 학습 데이터의 다양성을 확보하기 위해 **파라미터 랜덤화(Stochastic Parameterization)** 기능을 지원한다.
+    - 활성화 시, 각 이펙터의 수치가 지정된 범위 내에서 무작위로 변동되며, 필요에 따라 임의의 노이즈(Gaussian Noise 등)를 신호 체인에 추가해 모델의 강건성(Robustness)을 테스트할 수 있음.
 
 ## 베이스 (담당자: 유지성)
 
