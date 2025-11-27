@@ -55,7 +55,7 @@
 1. **[공통과정]전처리 (Pre-processing)**: `seperator.py`를 통해 `hydemucs_6s` 모델이 원본 오디오를 각 세션에 맞는 Stem 으로 분리하며, 본 모듈은 그중 `guitar` 트랙을 입력으로 사용한다.
 2. **이펙팅 (Effecting)**: `pedalboard` 라이브러리를 사용하여, 가상의 페달보드를 구성하고 직렬(Series)로 신호를 처리한다.
 
-### 이펙트 체인 명세 (Effect Chain Specification)
+### 이펙트 체인 구성 (Effect Chain Specification)
 
 본 세션에서 설계한 페달보드 구성은 다음과 같다. 아래 표에 명시된 값은 **기본 설정값(Default)**이며, 사용 목적에 따라 수정, 랜덤화가 가능함.
 
@@ -66,7 +66,7 @@
 | **3** | **Distortion** | `drive_db`: 12dB | 크런치(Crunch) 톤 형성 및 배음(Harmonics) 강조를 통한 존재감 부각 |
 | **4** | **Chorus** | `rate_hz`: 1.2Hz, `depth`: 0.3 | 스테레오 이미지를 확장하고 몽환적인 공간감 부여 |
 | **5** | **Reverb** | `room_size`: 0.4, `wet_level`: 0.3 | 소규모 클럽 공간의 자연스러운 잔향(Ambience) 시뮬레이션 |
-| **6** | **Limiter** | `threshold_db`: -1.0dB | 최종 출력 레벨 클리핑(Clipping) 방지 및 안전성 확보 |
+| **6** | **Gain** | `gain_db`: 0dB | 이펙팅으로 인한 레벨 변화 보정 및 최종 볼륨 조절 |
 
 ### 파라미터 커스터마이징 및 랜덤화 (Configuration & Randomization)
 
