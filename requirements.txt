@@ -1,7 +1,0 @@
-librosa
-numpy
-scikit-learn
-joblib
-matplotlib
-imageio-ffmpeg
-pydub
