@@ -61,12 +61,17 @@
 
 | 순서 | 이펙터 (Effect Unit) | 주요 설정 (Key Parameters) | 음향적 의도 (Tonal Function) |
 | :--- | :--- | :--- | :--- |
-| **1** | **Noise Gate** | `threshold_db`: -60dB | 음원 분리 과정에서 발생할 수 있는 아티팩트 및 배경 노이즈 제거 |
-| **2** | **Compressor** | `ratio`: 4:1, `attack`: 10ms | 다이내믹 레인지를 평탄화하여 단단한 피킹 뉘앙스 강조 |
-| **3** | **Distortion** | `drive_db`: 12dB | 크런치(Crunch) 톤 형성 및 배음(Harmonics) 강조를 통한 존재감 부각 |
-| **4** | **Chorus** | `rate_hz`: 1.2Hz, `depth`: 0.3 | 스테레오 이미지를 확장하고 몽환적인 공간감 부여 |
-| **5** | **Reverb** | `room_size`: 0.4, `wet_level`: 0.3 | 소규모 클럽 공간의 자연스러운 잔향(Ambience) 시뮬레이션 |
-| **6** | **Gain** | `gain_db`: 0dB | 이펙팅으로 인한 레벨 변화 보정 및 최종 볼륨 조절 |
+| **Dynamics** | **Noise Gate** | `threshold_db`: -60dB | 음원 분리 과정에서 발생할 수 있는 아티팩트 및 배경 노이즈 제거 |
+| **Dynamics** | **Compressor** | `ratio`: 4:1, `attack`: 10ms | 다이내믹 레인지를 평탄화하여 단단한 피킹 뉘앙스 강조 |
+| **Drive** | **Distortion** | `drive_db`: 12dB | 크런치(Crunch) 톤 형성 및 배음(Harmonics) 강조를 통한 존재감 부각 |
+| **Mod** | **Chorus** | `rate_hz`: 1.2Hz, `depth`: 0.3 | 스테레오 이미지를 확장하고 몽환적인 공간감 부여 |
+| **Mod** | **Phaser** | `rate_hz`: 1.0Hz | 위상 변위를 이용한 제트기 소리 및 사이키델릭 질감 형성 |
+| **Spatial** | **Delay** | `delay_seconds`: 0.5s | 원음의 반복 재생을 통한 리듬감 및 공간의 깊이 형성 |
+| **Spatial** | **Reverb** | `room_size`: 0.4, `wet_level`: 0.3 | 소규모 클럽 공간의 자연스러운 잔향(Ambience) 시뮬레이션 |
+| **Filter** | **HighPass Filter** | `cutoff_hz`: 80Hz | 초저역대(Rumble) 노이즈 및 DC Offset 제거 |
+| **Filter** | **LowPass Filter** | `cutoff_hz`: 12kHz | 고음역대 노이즈 및 거친 디지털 질감 정리 |
+| **Util** | **Gain** | `gain_db`: 0dB | 이펙팅으로 인한 레벨 변화 보정 및 최종 볼륨 조절 |
+| **Util** | **Limiter** | `threshold_db`: -1.0dB | 과도한 신호 증폭 시 파형 잘림(Clipping) 방지 및 안전장치 |
 
 ### 파라미터 커스터마이징 및 랜덤화 (Configuration & Randomization)
 
