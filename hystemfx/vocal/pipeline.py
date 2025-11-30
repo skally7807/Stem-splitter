@@ -12,3 +12,25 @@ vocal.pipeline
 
 - 요약: "보컬 이펙트 전용 end-to-end 파이프라인의 진입점(entry point)" 역할.
 """
+
+# 예상 주요 함수 설계:
+#
+# def process_vocal_pipeline(
+#     input_path: str,
+#     output_path: str,
+#     separator_model: str = "htdemucs_6s",
+#     chain_config: Optional[Dict[str, Any]] = None,
+# ) -> str:
+#     """
+#     High-level pipeline:
+#         1) input_path 의 믹스된 오디오를 core/separator 모듈로 보컬 stem만 분리
+#         2) vocal.effect_chain.build_vocal_chain(chain_config) 로 이펙트 체인 생성
+#         3) vocal.effect_processor.apply_vocal_chain(...) 으로 이펙트 적용
+#         4) vocal.postprocess.apply_vocal_postprocess(...) 로 레벨/리미터 정리
+#         5) 결과를 output_path 에 저장하고, 그 경로를 반환
+#
+#     나중에:
+#         - dry/wet 비율 옵션
+#         - 원래 믹스에 다시 합쳐서 "보컬만 이펙팅된 전체 곡" 도 같이 출력하는 기능 추가 가능
+#     """
+#     raise NotImplementedError
