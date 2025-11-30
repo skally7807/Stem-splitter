@@ -13,7 +13,9 @@ from .effects import (
     FX_Gain,
     FX_NoiseGate,
     FX_HighPass,
-    FX_LowPass
+    FX_LowPass,
+    FX_Limiter,
+    FX_Phaser
 )
 from pedalboard import Pedalboard
 
@@ -26,7 +28,9 @@ __all__ = [
     "FX_Gain",
     "FX_NoiseGate",
     "FX_HighPass",
-    "Fx_LowPass",
+    "FX_LowPass",
+    "FX_Limiter",
+    "FX_Phaser",
     "get_default_chain"
 ]
 
@@ -39,7 +43,8 @@ def get_default_chain():
         FX_Compressor(threshold_db=-10, ratio=3.0),
         FX_Distortion(drive_db=10.0),
         FX_Reverb(room_size=0.3, wet_level=0.2),
-        FX_Gain(gain_db=0.0)
+        FX_Gain(gain_db=0.0),
+        FX_Limiter(threshold_db=-1.0)
     ]
     
     # Wrapper에서 실제 device 객체만 추출하여 Pedalboard 구성

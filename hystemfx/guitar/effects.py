@@ -1,7 +1,8 @@
 from pedalboard import (
     Compressor, Distortion, 
     Chorus, Delay, Reverb, Gain, NoiseGate,
-    LowpassFilter, HighpassFilter
+    LowpassFilter, HighpassFilter,
+    Limiter, Phaser
 )
 from core.effect_block import EffectBlock
 
@@ -99,3 +100,36 @@ class FX_LowPass(EffectBlock):
         """
         self.device = LowpassFilter(cutoff_frequency_hz=cutoff_hz)
         
+class FX_Limiter(EffectBlock):
+    name = "guitar_limiter"
+
+    def __init__(self, threshold_db=-1.0, release_ms=100.0):
+        """
+        지정된 볼륨(threshold_db)을 넘지 않게 눌러줌.
+
+        :param threshold_db: 제한할 데시벨 기준값 (예: -1.0)
+        :param release_ms: 신호가 줄어들 때 리미터가 풀리는 시간 (ms)
+        """
+        super().__init__()
+        self.device = Limiter(threshold_db=threshold_db, release_ms=release_ms)
+
+class FX_Phaser(EffectBlock):
+    name = "guitar_phaser"
+
+    def __init__(self, rate_hz=1.0, depth=0.5, feedback=0.5, mix=0.5):
+        """
+        Phaser임
+        
+        :param rate_hz: 변조 속도 (Hz)
+        :param depth: 변조 깊이 (0.0 ~ 1.0)
+        :param feedback: 피드백 양 (0.0 ~ 1.0)
+        :param mix: 원음과 효과음의 혼합 비율 (0.0 ~ 1.0)
+        """
+        super().__init__()
+        self.device = Phaser(
+            rate_hz=rate_hz, 
+            depth=depth, 
+            feedback=feedback, 
+            mix=mix,
+            centre_frequency_hz=1300
+        )
