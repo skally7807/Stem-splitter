@@ -7,3 +7,7 @@ data/
 .python-version
 uv.lock
 pyproject.toml
+
+# Python cache
+__pycache__/
+*.pyc
