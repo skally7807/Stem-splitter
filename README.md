@@ -61,17 +61,12 @@
 
 | 순서 | 이펙터 (Effect Unit) | 주요 설정 (Key Parameters) | 음향적 의도 (Tonal Function) |
 | :--- | :--- | :--- | :--- |
-| **Dynamics** | **Noise Gate** | `threshold_db`: -60dB | 음원 분리 과정에서 발생할 수 있는 아티팩트 및 배경 노이즈 제거 |
-| **Dynamics** | **Compressor** | `ratio`: 4:1, `attack`: 10ms | 다이내믹 레인지를 평탄화하여 단단한 피킹 뉘앙스 강조 |
-| **Drive** | **Distortion** | `drive_db`: 12dB | 크런치(Crunch) 톤 형성 및 배음(Harmonics) 강조를 통한 존재감 부각 |
-| **Mod** | **Chorus** | `rate_hz`: 1.2Hz, `depth`: 0.3 | 스테레오 이미지를 확장하고 몽환적인 공간감 부여 |
-| **Mod** | **Phaser** | `rate_hz`: 1.0Hz | 위상 변위를 이용한 제트기 소리 및 사이키델릭 질감 형성 |
-| **Spatial** | **Delay** | `delay_seconds`: 0.5s | 원음의 반복 재생을 통한 리듬감 및 공간의 깊이 형성 |
-| **Spatial** | **Reverb** | `room_size`: 0.4, `wet_level`: 0.3 | 소규모 클럽 공간의 자연스러운 잔향(Ambience) 시뮬레이션 |
-| **Filter** | **HighPass Filter** | `cutoff_hz`: 80Hz | 초저역대(Rumble) 노이즈 및 DC Offset 제거 |
-| **Filter** | **LowPass Filter** | `cutoff_hz`: 12kHz | 고음역대 노이즈 및 거친 디지털 질감 정리 |
-| **Util** | **Gain** | `gain_db`: 0dB | 이펙팅으로 인한 레벨 변화 보정 및 최종 볼륨 조절 |
-| **Util** | **Limiter** | `threshold_db`: -1.0dB | 과도한 신호 증폭 시 파형 잘림(Clipping) 방지 및 안전장치 |
+| **1** | **Noise Gate** | `threshold_db`: -60dB | 음원 분리 과정에서 발생할 수 있는 아티팩트 및 배경 노이즈 제거 |
+| **2** | **Compressor** | `ratio`: 4:1, `attack`: 10ms | 다이내믹 레인지를 평탄화하여 단단한 피킹 뉘앙스 강조 |
+| **3** | **Distortion** | `drive_db`: 12dB | 크런치(Crunch) 톤 형성 및 배음(Harmonics) 강조를 통한 존재감 부각 |
+| **4** | **Chorus** | `rate_hz`: 1.2Hz, `depth`: 0.3 | 스테레오 이미지를 확장하고 몽환적인 공간감 부여 |
+| **5** | **Reverb** | `room_size`: 0.4, `wet_level`: 0.3 | 소규모 클럽 공간의 자연스러운 잔향(Ambience) 시뮬레이션 |
+| **6** | **Gain** | `gain_db`: 0dB | 이펙팅으로 인한 레벨 변화 보정 및 최종 볼륨 조절 |
 
 ### 파라미터 커스터마이징 및 랜덤화 (Configuration & Randomization)
 
@@ -84,7 +79,52 @@
     - 활성화 시, 각 이펙터의 수치가 지정된 범위 내에서 무작위로 변동되며, 필요에 따라 임의의 노이즈(Gaussian Noise 등)를 신호 체인에 추가해 모델의 강건성(Robustness)을 테스트할 수 있음.
 
 ## 베이스 (담당자: 유지성)
+### 처리 개요 (Processing Overview)
 
+본 모듈은 **Source Separation → Effect Chain Application** 의 2단계 파이프라인을 통해 밴드 사운드의 저음역대 중심을 잡는 베이스 기타 성분을 분리하고 전문적인 후처리를 수행한다.
+
+1. **음원 분리 (Source Separation)**: Demucs의 `htdemucs_6s` 모델을 활용하여 6-stem 분리를 수행하며, 이 중 `bass` stem을 추출한다. 특히 킥 드럼(Kick Drum)과의 주파수 마스킹을 해소하고 순수 베이스 라인을 확보하는 데 주력한다.
+2. **이펙트 처리 (Effect Processing)**: Spotify의 Pedalboard 라이브러리를 사용하여 추출된 베이스 성분에 최적화된 다이내믹 및 톤 보정 체인을 적용한다.
+
+### 음향 분리 전략 (Separation Strategy)
+
+베이스 기타는 화성적 기반과 리듬 그루브를 동시에 담당하며, 다음과 같은 음향적 특성을 고려하여 필터를 설계하였다:
+
+- **저음역대 에너지 (Low-end Energy)**: 40Hz ~ 200Hz 대역의 기본 주파수(Fundamental)를 단단하게 유지하여 믹스의 무게중심을 확보
+- **다이내믹스 제어 (Dynamic Consistency)**: 핑거링/피킹 강약에 따른 레벨 차이를 줄여, 전체 곡 내내 균일한 볼륨감 유지
+- **중고역 배음 (Mid-High Harmonics)**: 소형 스피커 청취 환경을 고려하여, 500Hz ~ 2kHz 대역의 배음을 강조하거나 Saturation을 더해 존재감 부각
+
+### 이펙트 체인 명세 (Effect Chain Specification)
+
+분리된 베이스 오디오에 적용되는 이펙트 체인은 **"단단함(Solidity)"**과 **"명료도(Definition)"**에 초점을 맞춘다. 아래 표의 값은 **기본 설정값(Default)**이며, 프리셋 또는 파라미터를 통해 조정 가능하다.
+
+| 순서 | 이펙터 (Effect Unit) | 주요 설정 (Key Parameters) | 음향적 의도 (Tonal Function) |
+| :--- | :--- | :--- | :--- |
+| **1** | **Noise Gate** | `threshold_db`: -55dB, `ratio`: 10:1 | 분리 과정에서 남은 미세한 노이즈 및 연주 사이의 험(Hum) 제거 |
+| **2** | **Compressor** | `ratio`: 4:1, `attack`: 20ms, `release`: 100ms | 들쑥날쑥한 피킹 뉘앙스를 정리하여 단단하고 펀치감 있는 톤 형성 |
+| **3** | **Distortion** | `drive_db`: 8dB | 진공관 앰프 느낌의 따뜻한 배음(Saturation) 추가 (존재감 향상) |
+| **4** | **EQ - Low Shelf** | `freq`: 80Hz, `gain`: +2dB | 킥 드럼과 어우러지는 묵직한 서브 베이스 대역 보강 |
+| **5** | **EQ - Mid Scoop** | `freq`: 400Hz, `gain`: -3dB, `Q`: 1.5 | '멍청한 소리(Muddy)'를 유발하는 중저역을 깎아내어 소리를 정돈 |
+| **6** | **Chorus** | `rate_hz`: 0.5Hz, `depth`: 0.15 | 스테레오 이미지를 미세하게 확장하여 현대적인 베이스 톤 연출 |
+| **7** | **Limiter** | `threshold_db`: -0.5dB | 최종 출력 피크 제어 및 클리핑 방지 |
+
+### 프리셋 시스템 (Preset System)
+
+다양한 연주 주법 및 장르에 대응하기 위해 5가지 사전 정의된 프리셋을 제공한다:
+
+- **Default**: 핑거/피크 주법 모두에 어울리는 균형 잡힌 설정
+- **Vintage**: 따뜻한 튜브 드라이브와 롤오프된 고역을 특징으로 하는 레트로 톤 (재즈, 블루스)
+- **Modern**: 중역을 깎고(Scoop) 저역/고역을 강조하여 슬랩 주법에 최적화된 톤 (펑크, 팝)
+- **Fuzz**: 강한 디스토션을 적용하여 록/메탈 장르에 적합한 공격적인 톤
+- **Sub**: 가청 주파수 배음보다는 묵직한 저음(Sub-bass) 위주의 톤 (힙합, 일렉트로닉)
+
+### 데이터 증강 및 랜덤화 (Data Augmentation)
+
+기계 학습 모델의 강건성(Robustness)을 확보하기 위해, 이펙트 파라미터의 확률적 변조(Stochastic Modulation)를 지원한다:
+
+- **RandomizedBassEffects 클래스**: 지정된 범위 내에서 파라미터를 무작위로 샘플링
+- **범위 커스터마이징**: `drive_db`, `compressor_threshold` 등 핵심 인자의 변동 폭 설정 가능
+- **재현성 보장**: Seed 값 설정을 통한 결정론적(Deterministic) 랜덤화 지원
 
 ## 신디사이저 & 피아노 & 키보드 (담당자: 정진욱)
 
