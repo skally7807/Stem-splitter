@@ -11,7 +11,9 @@ from .effects import (
     FX_Delay,
     FX_Reverb,
     FX_Gain,
-    FX_NoiseGate
+    FX_NoiseGate,
+    FX_HighPass,
+    FX_LowPass
 )
 from pedalboard import Pedalboard
 
@@ -23,6 +25,8 @@ __all__ = [
     "FX_Reverb",
     "FX_Gain",
     "FX_NoiseGate",
+    "FX_HighPass",
+    "Fx_LowPass",
     "get_default_chain"
 ]
 

@@ -1,6 +1,7 @@
 from pedalboard import (
     Compressor, Distortion, 
-    Chorus, Delay, Reverb, Gain, NoiseGate
+    Chorus, Delay, Reverb, Gain, NoiseGate,
+    LowpassFilter, HighpassFilter
 )
 from core.effect_block import EffectBlock
 
@@ -75,3 +76,26 @@ class FX_NoiseGate(EffectBlock):
             ratio=ratio, 
             release_ms=release_ms
         )
+        
+class FX_HighPass(EffectBlock):
+    name = "high_pass_filter"
+    
+    def __init__(self, cutoff_hz=100.0):
+        super().__init__()
+        """
+        특정 주파수 아래 깎아냄
+        :param cutoff_hz: threshold 주파수
+        """
+        self.device = HighpassFilter(cutoff_frequency_hz=cutoff_hz)
+        
+class FX_LowPass(EffectBlock):
+    name = "low_pass_filter"
+    
+    def __init__(self, cutoff_hz=10000.0):
+        super().__init__()
+        """
+        특정 주파수 위 깎아냄.
+        :param cutoff_hz: threshold 주파수
+        """
+        self.device = LowpassFilter(cutoff_frequency_hz=cutoff_hz)
+        
