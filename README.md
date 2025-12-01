@@ -90,7 +90,7 @@
 ### 처리 개요 (Processing Overview)
 전체 파이프라인은 **[Source Seperation] -> [Effect Chain Application]** 의 단계를 거친다.
 
-1. **[공통과정]전처리 (Pre-processing)**: `seperator.py`를 통해 `hydemucs_6s` 모델이 원본 오디오를 각 세션에 맞는 Stem 으로 분리하며, 본 모듈은 그중 `guitar` 트랙을 입력으로 사용한다.
+1. **[공통과정]전처리 (Pre-processing)**: `separator.py`를 통해 `hydemucs_6s` 모델이 원본 오디오를 각 세션에 맞는 Stem 으로 분리하며, 본 모듈은 그중 `guitar` 트랙을 입력으로 사용한다.
 2. **이펙팅 (Effecting)**: `pedalboard` 라이브러리를 사용하여, 가상의 페달보드를 구성하고 직렬(Series)로 신호를 처리한다.
 
 ### 이펙트 체인 구성 (Effect Chain Specification)
