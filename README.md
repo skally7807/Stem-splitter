@@ -59,7 +59,7 @@
 | **2** | **High-pass Filter** | `cutoff_hz`: 80–100Hz | 불필요한 저역 제거 및 마이크 럼블 억제 |
 | **3** | **De-esser** | `center_freq`: 5–7kHz, `ratio`: 3:1 | 치찰음(Sibilance) 제어 |
 | **4** | **Compressor** | `threshold`: -18dB, `ratio`: 3–4:1, `attack`: 5–10ms, `release`: 40–80ms | 발성 강도 차이를 줄이고 안정적 다이내믹 확보 |
-| **5** | **Parametric EQ** | Presence +1~2dB @3kHz, Air +1~2dB @10kHz | 명료도 및 존재감(Presence) 보강 |
+| **5** | **Parametric EQ** | Presence +~10–12dB @3kHz, Air +~10–12dB @10kHz *(기본값, 곡에 따라 1–2dB로 조정 권장)* | 명료도 및 존재감(Presence) 보강 |
 | **6** | **Saturation** | `drive_db`: 3–6dB, `mix`: 0.3 | 약한 하모닉스 추가로 밀도감 및 전면감 강화 |
 | **7** | **Reverb** | `room_size`: 0.2–0.35, `pre_delay_ms`: 20ms, `wet_level`: 0.15–0.25 | 자연스러운 공간감 부여 |
 | **8** | **Limiter** | `threshold_db`: -1.0dB | 최종 피크 제어 및 클리핑 방지 |
