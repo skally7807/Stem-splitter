@@ -124,6 +124,23 @@
 1. **음원 분리 (Source Separation)**: Demucs의 `htdemucs_6s` 모델을 활용하여 6-stem 분리를 수행하며, 이 중 `bass` stem을 추출한다. 특히 킥 드럼(Kick Drum)과의 주파수 마스킹을 해소하고 순수 베이스 라인을 확보하는 데 주력한다.
 2. **이펙트 처리 (Effect Processing)**: Spotify의 Pedalboard 라이브러리를 사용하여 추출된 베이스 성분에 최적화된 다이내믹 및 톤 보정 체인을 적용한다.
 
+## 신디사이저 & 피아노 & 키보드 (담당자: 정진욱)
+
+### 처리 개요 (Processing Overview)
+
+본 모듈은 **Source Separation → Effect Chain Application** 의 2단계 파이프라인을 통해 대중가요 믹스에서 신디사이저, 피아노, 키보드 성분을 분리하고 전문적인 후처리를 수행한다.
+
+1. **음원 분리 (Source Separation)**: Demucs의 `htdemucs_6s` 모델을 활용하여 6-stem 분리를 수행하며, 이 중 `piano` stem을 신디사이저/피아노/키보드 성분으로 추출한다.
+2. **이펙트 처리 (Effect Processing)**: Spotify의 Pedalboard 라이브러리를 사용하여 추출된 신디사이저 성분에 최적화된 이펙트 체인을 적용한다.
+
+### 음향 분리 전략 (Separation Strategy)
+
+신디사이저, 피아노, 키보드는 전자 악기와 어쿠스틱 악기의 중간 영역에 위치하며, 다음과 같은 음향적 특성을 공유한다:
+
+- **명확한 음높이 (Pitch Clarity)**: 기타나 드럼과 달리 정확한 음정을 가진 타악기적 특성
+- **지속적인 배음 구조 (Sustained Harmonics)**: 건반 타격 후 일정 시간 동안 지속되는 안정적인 배음 패턴
+- **중역대 에너지 집중 (Mid-range Energy)**: 약 200Hz~4kHz 사이에 주요 에너지가 분포
+
 ### 음향 분리 전략 (Separation Strategy)
 
 베이스 기타는 화성적 기반과 리듬 그루브를 동시에 담당하며, 다음과 같은 음향적 특성을 고려하여 필터를 설계하였다:
