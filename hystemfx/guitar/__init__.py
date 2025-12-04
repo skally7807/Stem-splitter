@@ -15,7 +15,8 @@ from .effects import (
     FX_HighPass,
     FX_LowPass,
     FX_Limiter,
-    FX_Phaser
+    FX_Phaser,
+    GuitarEffectsChain
 )
 from pedalboard import Pedalboard
 
@@ -31,6 +32,7 @@ __all__ = [
     "FX_LowPass",
     "FX_Limiter",
     "FX_Phaser",
+    "GuitarEffectsChain",
     "get_default_chain"
 ]
 
