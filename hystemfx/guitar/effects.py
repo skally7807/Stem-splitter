@@ -2,9 +2,10 @@ from pedalboard import (
     Compressor, Distortion, 
     Chorus, Delay, Reverb, Gain, NoiseGate,
     LowpassFilter, HighpassFilter,
-    Limiter, Phaser
+    Limiter, Phaser, Pedalboard
 )
 from hystemfx.core.effect_block import EffectBlock
+import numpy as np
 
 class FX_Compressor(EffectBlock):
     name = "guitar_compressor"
@@ -133,3 +134,96 @@ class FX_Phaser(EffectBlock):
             mix=mix,
             centre_frequency_hz=1300
         )
+
+class GuitarEffectsChain:
+    """
+    Guitar Effects Chain
+    
+    Presets:
+    - clean: Compressor -> Chorus -> Reverb
+    - distortion: NoiseGate -> Distortion -> Reverb
+    - crunch: Compressor -> Mild Distortion -> Reverb
+    """
+    def __init__(self, preset="clean", custom_board=None, **kwargs):
+        self.preset = preset
+        self.params = kwargs
+        self.board = custom_board
+        
+        if self.board is None:
+            self._build_board()
+
+    def _build_board(self):
+        effects = []
+        
+        if self.preset == "clean":
+            # Clean: Compressor -> Chorus -> Reverb
+            comp_thresh = self.params.get("comp_threshold_db", -15.0)
+            chorus_rate = self.params.get("chorus_rate_hz", 1.0)
+            reverb_size = self.params.get("reverb_room_size", 0.4)
+            
+            effects.append(FX_Compressor(threshold_db=comp_thresh).device)
+            effects.append(FX_Chorus(rate_hz=chorus_rate).device)
+            effects.append(FX_Reverb(room_size=reverb_size).device)
+            
+        elif self.preset == "distortion":
+            # Distortion: NoiseGate -> Distortion -> Reverb
+            gate_thresh = self.params.get("gate_threshold_db", -50.0)
+            drive = self.params.get("drive_db", 30.0)
+            reverb_size = self.params.get("reverb_room_size", 0.3)
+            
+            effects.append(FX_NoiseGate(threshold_db=gate_thresh).device)
+            effects.append(FX_Distortion(drive_db=drive).device)
+            effects.append(FX_Reverb(room_size=reverb_size).device)
+            
+        elif self.preset == "crunch":
+            # Crunch: Compressor -> Mild Distortion -> Reverb
+            comp_thresh = self.params.get("comp_threshold_db", -20.0)
+            drive = self.params.get("drive_db", 15.0)
+            reverb_size = self.params.get("reverb_room_size", 0.3)
+            
+            effects.append(FX_Compressor(threshold_db=comp_thresh).device)
+            effects.append(FX_Distortion(drive_db=drive).device)
+            effects.append(FX_Reverb(room_size=reverb_size).device)
+            
+        else:
+            # Default to clean if unknown
+            print(f"[GuitarEffectsChain] Unknown preset '{self.preset}'. Using clean.")
+            effects.append(FX_Compressor().device)
+            effects.append(FX_Reverb().device)
+
+        self.board = Pedalboard(effects)
+
+    def process(self, audio: np.ndarray, sample_rate: int) -> np.ndarray:
+        if self.board is None:
+            self._build_board()
+            
+        input_audio = audio.copy()
+        
+        # Ensure (C, T) -> (C, T) for Pedalboard (it handles channels well usually, 
+        # but let's stick to standard checks if needed. Pedalboard expects (C, T) or (T, C) depending on version/usage.
+        # Our other classes handle transpose. Let's do similar safety.
+        
+        # If input is (T,), make it (1, T)
+        if input_audio.ndim == 1:
+            input_audio = input_audio[np.newaxis, :]
+            
+        # Check shape. If (T, C) where T > C, transpose to (C, T) for consistency with other modules if they prefer that,
+        # OR just pass to pedalboard. Pedalboard.__call__ takes (channels, samples).
+        # So if we have (samples, channels), we must transpose.
+        transposed = False
+        if input_audio.shape[0] > input_audio.shape[1]: 
+             input_audio = input_audio.T
+             transposed = True
+             
+        processed = self.board(input_audio, sample_rate)
+        
+        if transposed:
+            processed = processed.T
+            
+        return processed
+
+    def get_settings(self):
+        return {
+            "preset": self.preset if self.preset else "custom",
+            **self.params
+        }
