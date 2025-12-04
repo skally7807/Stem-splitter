@@ -4,7 +4,7 @@ from pedalboard import (
     LowpassFilter, HighpassFilter,
     Limiter, Phaser
 )
-from core.effect_block import EffectBlock
+from hystemfx.core.effect_block import EffectBlock
 
 class FX_Compressor(EffectBlock):
     name = "guitar_compressor"
