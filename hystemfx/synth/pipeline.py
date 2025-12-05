@@ -16,10 +16,10 @@ from .effects import SynthEffectsChain, RandomizedSynthEffects, apply_synth_effe
 
 class SynthPipeline:
     """
-    완전한 신디사이저/피아노/키보드 처리 파이프라인 클래스.
+    완전한 신디사이저/피아노/키보드 처리 파이프라인 클래스임.
     
-    음원 분리(Separation)부터 이펙트 적용(Effect Processing)까지의 전체 워크플로우를 관리합니다.
-    단일 파일 처리, 메모리 상의 오디오 처리, 배치 처리를 모두 지원합니다.
+    음원 분리(Separation)부터 이펙트 적용(Effect Processing)까지의 전체 워크플로우를 관리함.
+    단일 파일 처리, 메모리 상의 오디오 처리, 배치 처리를 모두 지원함.
     """
     
     def __init__(
@@ -30,10 +30,10 @@ class SynthPipeline:
         **effect_params
     ):
         """
-        SynthPipeline 인스턴스를 초기화합니다.
+        SynthPipeline 인스턴스를 초기화함.
 
         :param separation_model: 사용할 Demucs 모델 이름 (기본값: "htdemucs_6s")
-        :param device: 연산에 사용할 디바이스 ('cuda', 'cpu' 또는 None). None일 경우 자동 선택됩니다.
+        :param device: 연산에 사용할 디바이스 ('cuda', 'cpu' 또는 None). None일 경우 자동 선택됨.
         :param effect_preset: 적용할 이펙트 프리셋 이름 ("default", "bright", "warm", "spacious", "tight" 등)
         :param effect_params: 이펙트 체인에 전달할 추가 파라미터들
         """
@@ -49,15 +49,15 @@ class SynthPipeline:
         return_all_stems: bool = False
     ) -> Union[np.ndarray, Dict[str, np.ndarray]]:
         """
-        메모리 상의 오디오 데이터에 대해 파이프라인을 실행합니다.
+        메모리 상의 오디오 데이터에 대해 파이프라인을 실행함.
         
-        1. Demucs를 사용하여 믹스에서 신디사이저/피아노 트랙을 분리합니다.
-        2. (옵션) 분리된 트랙에 이펙트 체인을 적용합니다.
+        1. Demucs를 사용하여 믹스에서 신디사이저/피아노 트랙을 분리함.
+        2. (옵션) 분리된 트랙에 이펙트 체인을 적용함.
 
         :param audio: 입력 오디오 데이터 (NumPy 배열, shape: [channels, samples] 또는 [samples])
         :param sample_rate: 오디오의 샘플 레이트 (Hz)
         :param apply_effects: 이펙트 체인을 적용할지 여부 (기본값: True)
-        :param return_all_stems: True일 경우, 분리된 모든 스템(드럼, 베이스 등 포함)을 딕셔너리로 반환합니다.
+        :param return_all_stems: True일 경우, 분리된 모든 스템(드럼, 베이스 등 포함)을 딕셔너리로 반환함.
         
         :return: 처리된 신디사이저 오디오 배열, 또는 모든 스템이 포함된 딕셔너리
         """
@@ -99,12 +99,12 @@ class SynthPipeline:
         save_separated_only: bool = False
     ) -> Optional[np.ndarray]:
         """
-        오디오 파일을 읽어서 파이프라인을 처리하고, 결과를 파일로 저장합니다.
+        오디오 파일을 읽어서 파이프라인을 처리하고, 결과를 파일로 저장함.
 
         :param input_path: 입력 오디오 파일의 경로
         :param output_path: 처리된 오디오를 저장할 경로 (None일 경우 저장하지 않음)
         :param apply_effects: 이펙트 적용 여부 (기본값: True)
-        :param save_separated_only: True일 경우 이펙트 없이 분리된 원본 스템만 저장합니다.
+        :param save_separated_only: True일 경우 이펙트 없이 분리된 원본 스템만 저장함.
         
         :return: 처리된 오디오 데이터 (NumPy 배열)
         :raises ImportError: pedalboard가 설치되지 않은 경우 발생
@@ -150,12 +150,12 @@ class SynthPipeline:
         randomize_effects: bool = False
     ):
         """
-        여러 오디오 파일을 일괄 처리(Batch Processing)합니다.
+        여러 오디오 파일을 일괄 처리(Batch Processing)함.
 
         :param input_files: 입력 파일 경로들의 리스트
         :param output_dir: 결과 파일을 저장할 디렉토리 경로
         :param apply_effects: 이펙트 적용 여부
-        :param randomize_effects: True일 경우 각 파일마다 랜덤한 이펙트 파라미터를 적용합니다.
+        :param randomize_effects: True일 경우 각 파일마다 랜덤한 이펙트 파라미터를 적용함.
         """
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -211,9 +211,9 @@ def process_synth_from_mix(
     **effect_params
 ) -> np.ndarray:
     """
-    [편의 함수] 믹스 오디오에서 신디사이저/피아노를 분리하고 이펙트를 적용합니다.
+    [편의 함수] 믹스 오디오에서 신디사이저/피아노를 분리하고 이펙트를 적용함.
     
-    SynthPipeline 클래스를 인스턴스화하지 않고 빠르게 처리하고 싶을 때 사용하세요.
+    SynthPipeline 클래스를 인스턴스화하지 않고 빠르게 처리하고 싶을 때 사용하셈.
 
     :param audio: 입력 믹스 오디오 데이터
     :param sample_rate: 샘플 레이트

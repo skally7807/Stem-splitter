@@ -26,14 +26,15 @@ def process_stem(
     sr: int = 44100
 ) -> None:
     """
-    Process a single stem file with effects.
+    단일 스템 파일에 이펙트를 적용하여 저장함.
     
-    Args:
-        input_path (str): Path to input stem file
-        output_path (str): Path to save processed file
-        session_type (str): 'vocals', 'guitar', 'piano', etc.
-        preset (str or object): Preset name or custom effect object
-        sr (int): Sample rate
+    이미 분리된 오디오 파일(Stem)을 입력으로 받아, 해당 세션 타입에 맞는 이펙트 체인을 적용함.
+    
+    :param input_path: 입력 스템 파일 경로
+    :param output_path: 처리된 파일을 저장할 경로
+    :param session_type: 세션 타입 ('vocals', 'guitar', 'piano', 'bass')
+    :param preset: 이펙트 프리셋 이름 또는 커스텀 이펙트 객체
+    :param sr: 샘플 레이트 (기본값: 44100)
     """
     print(f"- Processing stem: {session_type} ({input_path})")
     
@@ -100,23 +101,24 @@ def run_pipeline(
     bass_preset: str = "default"
 ) -> Dict[str, str]:
     """
-    Run the full audio processing pipeline:
-    1. Separate audio into stems.
-    2. Save raw stems.
-    3. Apply effects to specific stems in memory.
-    4. Save processed stems.
+    전체 오디오 처리 파이프라인을 실행함 (Master Pipeline).
     
-    Args:
-        input_path (str): Path to the input audio file.
-        device (str, optional): 'cuda' or 'cpu'. Defaults to auto-detect.
-        output_dir (str): Directory to save output files.
-        vocal_preset (str): Preset name for vocal effects.
-        synth_preset (str): Preset name for synth/piano effects.
-        guitar_preset (str): Preset name for guitar effects.
-        bass_preset (str): Preset name for bass effects.
+    1. 입력 오디오를 로드하고 Demucs를 사용하여 각 악기(Stem)로 분리함.
+    2. 분리된 원본 스템(Raw Stems)을 저장함.
+    3. 각 스템에 대해 설정된 프리셋을 사용하여 이펙트를 적용함 (In-Memory).
+    4. 이펙트가 적용된 스템(Processed Stems)을 저장함.
     
-    Returns:
-        Dict[str, str]: Map of saved file paths.
+    :param input_path: 입력 오디오 파일 경로 (믹스 파일)
+    :param device: 연산 장치 ('cuda' 또는 'cpu'). None일 경우 자동 감지.
+    :param output_dir: 결과 파일을 저장할 디렉토리 경로
+    :param vocal_preset: 보컬 이펙트 프리셋 이름
+    :param synth_preset: 신디사이저/피아노 이펙트 프리셋 이름
+    :param guitar_preset: 기타 이펙트 프리셋 이름
+    :param bass_preset: 베이스 이펙트 프리셋 이름
+    
+    :return: 저장된 파일 경로들의 딕셔너리 (Key: 식별자, Value: 파일 경로)
+    :raises FileNotFoundError: 입력 파일이 없을 경우
+    :raises RuntimeError: 오디오 로드, 분리, 또는 처리 중 오류 발생 시
     """
     input_path = Path(input_path)
     if not input_path.exists():

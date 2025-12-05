@@ -9,13 +9,13 @@ from hystemfx.core.separator import DemucsSeparator
 
 class GuitarSeparator(DemucsSeparator):
     """
-    기타 분리 전용 클래스
-    DemucsSeparator를 상속받아 'guitar' 스템을 추출합니다.
+    기타 분리 전용 클래스임.
+    DemucsSeparator를 상속받아 'guitar' 스템을 추출함.
     """
     
     def __init__(self, model_name: str = "htdemucs_6s", device: Optional[str] = None):
         """
-        초기화
+        초기화함.
         
         Parameters:
             model_name (str): 사용할 Demucs 모델 이름 (기본값: "htdemucs_6s")
@@ -31,12 +31,12 @@ class GuitarSeparator(DemucsSeparator):
         return_all_stems: bool = False
     ) -> Union[np.ndarray, Dict[str, np.ndarray]]:
         """
-        오디오에서 기타 성분 분리
+        오디오에서 기타 성분을 분리함.
         
         Parameters:
             audio (np.ndarray): 입력 오디오 배열
             sample_rate (int): 샘플레이트
-            return_all_stems (bool): True일 경우 모든 스템을 딕셔너리로 반환
+            return_all_stems (bool): True일 경우 모든 스템을 딕셔너리로 반환함.
             
         Returns:
             np.ndarray: 분리된 기타 오디오 (return_all_stems=False)
@@ -59,7 +59,7 @@ def separate_guitar(
     device: Optional[str] = None
 ) -> np.ndarray:
     """
-    편의 함수: 기타 분리
+    편의 함수: 기타 분리함.
     
     Parameters:
         audio (np.ndarray): 입력 오디오
