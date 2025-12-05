@@ -11,6 +11,7 @@ dependencies = [
     "numpy<2.0",
     "pedalboard>=0.9.19",
     "sphinx>=7.4.7",
+    "sphinx-rtd-theme>=0.5.1",
     "torch",
     "torchaudio",
 ]
