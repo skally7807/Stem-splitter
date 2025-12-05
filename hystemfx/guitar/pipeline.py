@@ -1,8 +1,8 @@
 """
-Vocal Processing Pipeline
-보컬 분리 및 이펙트 처리 통합 파이프라인
+Guitar Processing Pipeline
+기타 분리 및 이펙트 처리 통합 파이프라인
 
-이 모듈은 전체 믹스 오디오에서 보컬 성분을 분리하고,
+이 모듈은 전체 믹스 오디오에서 기타 성분을 분리하고,
 설정된 이펙트 체인을 적용하여 최종 결과물을 생성하는 파이프라인을 제공합니다.
 """
 
@@ -10,14 +10,14 @@ import numpy as np
 from typing import Optional, Union, Dict
 from pathlib import Path
 
-from .separator import VocalSeparator, separate_vocal
-from .effects import VocalRack  # VocalRack is the effect chain class for vocal
+from .separator import GuitarSeparator, separate_guitar
+from .effects import GuitarEffectsChain
 
-class VocalPipeline:
+class GuitarPipeline:
     """
-    보컬 처리를 위한 통합 파이프라인 클래스임.
+    기타 처리를 위한 통합 파이프라인 클래스임.
     
-    이 클래스는 Demucs를 사용한 보컬 분리(Separation)와 Pedalboard를 사용한 이펙트 처리(Effect Processing)를
+    이 클래스는 Demucs를 사용한 기타 분리(Separation)와 Pedalboard를 사용한 이펙트 처리(Effect Processing)를
     하나의 워크플로우로 통합하여 관리함.
     
     주요 기능:
@@ -30,21 +30,22 @@ class VocalPipeline:
         self,
         separation_model: str = "htdemucs_6s",
         device: Optional[str] = None,
-        effect_preset: str = "default",
+        effect_preset: str = "clean",
         **effect_params
     ):
         """
-        VocalPipeline 인스턴스를 초기화함.
+        GuitarPipeline 인스턴스를 초기화함.
 
         :param separation_model: 사용할 Demucs 모델 이름 (기본값: "htdemucs_6s")
         :param device: 연산에 사용할 디바이스 ('cuda', 'cpu' 또는 None). None일 경우 자동 선택됨.
-        :param effect_preset: 적용할 이펙트 프리셋 이름 (예: "default", "bright", "warm")
+        :param effect_preset: 적용할 이펙트 프리셋 이름 (예: "clean", "distortion", "crunch")
         :param effect_params: 이펙트 체인에 전달할 추가 파라미터들
         """
-        self.separator = VocalSeparator(model_name=separation_model, device=device)
+        self.separator = GuitarSeparator(model_name=separation_model, device=device)
         self.effect_preset = effect_preset
         self.effect_params = effect_params
-        self.fx_rack = VocalRack() # Initialize VocalRack
+        # GuitarEffectsChain takes preset in init
+        self.effects_chain = GuitarEffectsChain(preset=effect_preset, **effect_params)
         
     def process(
         self,
@@ -56,38 +57,35 @@ class VocalPipeline:
         """
         메모리 상의 오디오 데이터(NumPy 배열)를 처리함.
         
-        1. 입력된 믹스 오디오에서 보컬 트랙을 분리함.
-        2. (옵션) 분리된 보컬 트랙에 설정된 이펙트 프리셋을 적용함.
+        1. 입력된 믹스 오디오에서 기타 트랙을 분리함.
+        2. (옵션) 분리된 기타 트랙에 설정된 이펙트 프리셋을 적용함.
 
         :param audio: 입력 오디오 데이터 (NumPy 배열, shape: [channels, samples] 또는 [samples])
         :param sample_rate: 오디오의 샘플 레이트 (Hz)
         :param apply_effects: 이펙트 체인을 적용할지 여부 (기본값: True)
-        :param return_all_stems: True일 경우, 분리된 모든 스템(보컬 외)을 포함한 딕셔너리를 반환함.
+        :param return_all_stems: True일 경우, 분리된 모든 스템(기타 외)을 포함한 딕셔너리를 반환함.
         
         :return: 
-            - 기본적으로 처리된 보컬 오디오 배열(np.ndarray)을 반환함.
-            - `return_all_stems=True`인 경우, `{'vocals': ..., 'vocals_processed': ..., ...}` 형태의 딕셔너리를 반환함.
+            - 기본적으로 처리된 기타 오디오 배열(np.ndarray)을 반환함.
+            - `return_all_stems=True`인 경우, `{'guitar': ..., 'guitar_processed': ..., ...}` 형태의 딕셔너리를 반환함.
         """
-        print("Step 1/2: Separating vocals from mix...")
+        print("Step 1/2: Separating guitar from mix...")
         
         # 음원 분리
         if return_all_stems:
             stems = self.separator.separate(audio, sample_rate, return_all_stems=True)
-            vocal_audio = stems["vocals"]
+            guitar_audio = stems["guitar"]
         else:
-            vocal_audio = self.separator.separate(audio, sample_rate, return_all_stems=False)
+            guitar_audio = self.separator.separate(audio, sample_rate, return_all_stems=False)
         
         # 이펙트 적용
         if apply_effects:
             print("Step 2/2: Applying effects chain...")
-            # VocalRack uses load_preset and process method
-            self.fx_rack.load_preset(self.effect_preset)
-            # Apply additional params if supported, or just process
-            # VocalRack.process takes (audio, sample_rate)
-            processed = self.fx_rack.process(vocal_audio, sample_rate)
+            # GuitarEffectsChain.process takes (audio, sample_rate)
+            processed = self.effects_chain.process(guitar_audio, sample_rate)
             
             if return_all_stems:
-                stems["vocals_processed"] = processed
+                stems["guitar_processed"] = processed
                 return stems
             else:
                 return processed
@@ -95,7 +93,7 @@ class VocalPipeline:
             if return_all_stems:
                 return stems
             else:
-                return vocal_audio
+                return guitar_audio
     
     def process_file(
         self,
@@ -152,8 +150,7 @@ class VocalPipeline:
         self,
         input_files: list,
         output_dir: Union[str, Path],
-        apply_effects: bool = True,
-        randomize_effects: bool = False
+        apply_effects: bool = True
     ):
         """
         여러 오디오 파일을 일괄 처리(Batch Processing)함.
@@ -161,63 +158,37 @@ class VocalPipeline:
         :param input_files: 입력 파일 경로들의 리스트
         :param output_dir: 결과 파일을 저장할 디렉토리 경로
         :param apply_effects: 이펙트 적용 여부
-        :param randomize_effects: True일 경우 각 파일마다 랜덤한 이펙트 파라미터를 적용함 (데이터 증강 등에 활용 가능).
         """
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         
         for i, input_file in enumerate(input_files):
             input_path = Path(input_file)
-            output_path = output_dir / f"{input_path.stem}_vocal_processed{input_path.suffix}"
+            output_path = output_dir / f"{input_path.stem}_guitar_processed{input_path.suffix}"
             
             print(f"\n[{i+1}/{len(input_files)}] Processing: {input_path.name}")
             
             try:
-                if randomize_effects and apply_effects:
-                    # 랜덤 이펙트 사용 (VocalRack supports randomize_parameters)
-                    try:
-                        from pedalboard.io import AudioFile
-                    except ImportError:
-                        raise ImportError("Pedalboard is not installed.")
-                    
-                    with AudioFile(str(input_path)) as f:
-                        audio = f.read(f.frames)
-                        sample_rate = f.samplerate
-                    
-                    # 분리
-                    vocal_audio = self.separator.separate(audio, sample_rate)
-                    
-                    # 랜덤 이펙트 적용
-                    self.fx_rack.randomize_parameters() # seed?
-                    processed = self.fx_rack.process(vocal_audio, sample_rate)
-                    print(f"  Applied randomized effects.")
-                    
-                    # 저장
-                    with AudioFile(str(output_path), 'w', sample_rate, processed.shape[0]) as f:
-                        f.write(processed)
-                else:
-                    # 일반 처리
-                    self.process_file(input_path, output_path, apply_effects=apply_effects)
-                    
+                self.process_file(input_path, output_path, apply_effects=apply_effects)
                 print(f"  ✓ Saved to: {output_path}")
                 
             except Exception as e:
                 print(f"  ✗ Error processing {input_path.name}: {e}")
 
 
-def process_vocal_from_mix(
+def process_guitar_from_mix(
     audio: np.ndarray,
     sample_rate: int,
     apply_effects: bool = True,
-    effect_preset: str = "default",
+    effect_preset: str = "clean",
     separation_model: str = "htdemucs_6s",
     device: Optional[str] = None,
     **effect_params
 ) -> np.ndarray:
     """
-    [편의 함수] 믹스 오디오에서 보컬을 분리하고 이펙트를 적용함.
+    [편의 함수] 믹스 오디오에서 기타를 분리하고 이펙트를 적용함.
     
-    VocalPipeline 클래스를 직접 인스턴스화하지 않고, 함수 호출 한 번으로 처리를 수행하고 싶을 때 유용함.
+    GuitarPipeline 클래스를 직접 인스턴스화하지 않고, 함수 호출 한 번으로 처리를 수행하고 싶을 때 유용함.
 
     :param audio: 입력 믹스 오디오 데이터 (NumPy 배열)
     :param sample_rate: 샘플 레이트 (Hz)
@@ -227,9 +198,9 @@ def process_vocal_from_mix(
     :param device: 연산 장치 ('cuda' 또는 'cpu')
     :param effect_params: 추가 이펙트 파라미터
     
-    :return: 처리된 보컬 오디오 데이터 (NumPy 배열)
+    :return: 처리된 기타 오디오 데이터 (NumPy 배열)
     """
-    pipeline = VocalPipeline(
+    pipeline = GuitarPipeline(
         separation_model=separation_model,
         device=device,
         effect_preset=effect_preset,

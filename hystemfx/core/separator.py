@@ -31,7 +31,10 @@ class DemucsSeparator:
             # Mono: (Samples,) -> (1, 1, Samples)
             audio = audio[None, None, :] 
         elif audio.ndim == 2:
-            # Stereo: (Channels, Samples) -> (1, Channels, Samples)
+            # Stereo: Ensure (Channels, Samples)
+            if audio.shape[0] > audio.shape[1]:
+                audio = audio.T
+            # Add batch dim: (Channels, Samples) -> (1, Channels, Samples)
             audio = audio[None, :, :]
         
         # 텐서 변환
@@ -60,7 +63,8 @@ class DemucsSeparator:
         파일 경로를 받아 로드 후 즉시 분리하여 메모리 데이터로 반환
         """
         print(f"Loading: {audio_path}")
-        audio, _ = load_audio(audio_path, target_sr=self.sample_rate)
+        # Use standardized load_audio
+        audio, _ = load_audio(audio_path, sr=self.sample_rate)
         
         print(f"Separating in memory (shifts={shifts})...")
         return self.separate_memory(audio, shifts=shifts)
