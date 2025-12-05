@@ -1,129 +1,239 @@
-import os
-import sys
-import soundfile as sf
-import torch
+"""
+Vocal Processing Pipeline
+보컬 분리 및 이펙트 처리 통합 파이프라인
+
+이 모듈은 전체 믹스 오디오에서 보컬 성분을 분리하고,
+설정된 이펙트 체인을 적용하여 최종 결과물을 생성하는 파이프라인을 제공합니다.
+"""
+
 import numpy as np
+from typing import Optional, Union, Dict
+from pathlib import Path
 
-# =================================================================
-# [경로 설정]
-# =================================================================
-current_file_path = os.path.abspath(__file__)
-# .../Project/hystemfx/vocal/pipeline.py -> .../Project
-root_path = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
-if root_path not in sys.path:
-    sys.path.append(root_path)
-
-from hystemfx.core.separator import DemucsSeparator      # core 분리기
-from hystemfx.vocal.effects import VocalRack             # 보컬 이펙트 체인
-
+from .separator import VocalSeparator, separate_vocal
+from .effects import VocalRack  # VocalRack is the effect chain class for vocal
 
 class VocalPipeline:
     """
-    Vocal Stem 분리(Demucs) + 보컬 이펙트 체인(Pedalboard) 파이프라인
+    보컬 처리를 위한 통합 파이프라인 클래스임.
+    
+    이 클래스는 Demucs를 사용한 보컬 분리(Separation)와 Pedalboard를 사용한 이펙트 처리(Effect Processing)를
+    하나의 워크플로우로 통합하여 관리함.
+    
+    주요 기능:
+    - 단일 파일 처리 (`process_file`)
+    - 메모리 상의 오디오 데이터 처리 (`process`)
+    - 다중 파일 배치 처리 (`batch_process`)
     """
+    
+    def __init__(
+        self,
+        separation_model: str = "htdemucs_6s",
+        device: Optional[str] = None,
+        effect_preset: str = "default",
+        **effect_params
+    ):
+        """
+        VocalPipeline 인스턴스를 초기화함.
 
-    def __init__(self, device: str | None = None):
-        # Demucs 실행 디바이스
-        self.device = device if device else ("cuda" if torch.cuda.is_available() else "cpu")
+        :param separation_model: 사용할 Demucs 모델 이름 (기본값: "htdemucs_6s")
+        :param device: 연산에 사용할 디바이스 ('cuda', 'cpu' 또는 None). None일 경우 자동 선택됨.
+        :param effect_preset: 적용할 이펙트 프리셋 이름 (예: "default", "bright", "warm")
+        :param effect_params: 이펙트 체인에 전달할 추가 파라미터들
+        """
+        self.separator = VocalSeparator(model_name=separation_model, device=device)
+        self.effect_preset = effect_preset
+        self.effect_params = effect_params
+        self.fx_rack = VocalRack() # Initialize VocalRack
+        
+    def process(
+        self,
+        audio: np.ndarray,
+        sample_rate: int,
+        apply_effects: bool = True,
+        return_all_stems: bool = False
+    ) -> Union[np.ndarray, Dict[str, np.ndarray]]:
+        """
+        메모리 상의 오디오 데이터(NumPy 배열)를 처리함.
+        
+        1. 입력된 믹스 오디오에서 보컬 트랙을 분리함.
+        2. (옵션) 분리된 보컬 트랙에 설정된 이펙트 프리셋을 적용함.
 
-        # Demucs Separator 초기화
-        try:
-            self.separator = DemucsSeparator(device=self.device)
-            print(f"[VocalPipeline] DemucsSeparator 로드 성공 (device={self.device})")
-        except Exception as e:
-            print(f"[VocalPipeline] DemucsSeparator 초기화 실패: {e}")
-            self.separator = None
-
-        # Vocal FX Rack 초기화
-        self.fx_rack = VocalRack()
-
+        :param audio: 입력 오디오 데이터 (NumPy 배열, shape: [channels, samples] 또는 [samples])
+        :param sample_rate: 오디오의 샘플 레이트 (Hz)
+        :param apply_effects: 이펙트 체인을 적용할지 여부 (기본값: True)
+        :param return_all_stems: True일 경우, 분리된 모든 스템(보컬 외)을 포함한 딕셔너리를 반환함.
+        
+        :return: 
+            - 기본적으로 처리된 보컬 오디오 배열(np.ndarray)을 반환함.
+            - `return_all_stems=True`인 경우, `{'vocals': ..., 'vocals_processed': ..., ...}` 형태의 딕셔너리를 반환함.
+        """
+        print("Step 1/2: Separating vocals from mix...")
+        
+        # 음원 분리
+        if return_all_stems:
+            stems = self.separator.separate(audio, sample_rate, return_all_stems=True)
+            vocal_audio = stems["vocals"]
+        else:
+            vocal_audio = self.separator.separate(audio, sample_rate, return_all_stems=False)
+        
+        # 이펙트 적용
+        if apply_effects:
+            print("Step 2/2: Applying effects chain...")
+            # VocalRack uses load_preset and process method
+            self.fx_rack.load_preset(self.effect_preset)
+            # Apply additional params if supported, or just process
+            # VocalRack.process takes (audio, sample_rate)
+            processed = self.fx_rack.process(vocal_audio, sample_rate)
+            
+            if return_all_stems:
+                stems["vocals_processed"] = processed
+                return stems
+            else:
+                return processed
+        else:
+            if return_all_stems:
+                return stems
+            else:
+                return vocal_audio
+    
     def process_file(
         self,
-        input_path: str,
-        output_path: str,
-        preset: str = "default",
-        seed: int | None = None,
-    ) -> None:
+        input_path: Union[str, Path],
+        output_path: Optional[Union[str, Path]] = None,
+        apply_effects: bool = True,
+        save_separated_only: bool = False
+    ) -> Optional[np.ndarray]:
         """
-        1) 입력 파일에서 보컬 stem 추출 (Demucs)
-        2) 보컬 이펙트 체인 적용
-        3) 결과를 output_path 에 저장
+        오디오 파일을 읽어서 분리 및 이펙트 처리를 수행하고, 결과를 파일로 저장함.
+
+        :param input_path: 입력 오디오 파일의 경로 (wav, mp3 등 지원)
+        :param output_path: 처리된 오디오를 저장할 경로 (None일 경우 저장하지 않음)
+        :param apply_effects: 이펙트 적용 여부 (기본값: True)
+        :param save_separated_only: True일 경우 이펙트 처리 없이 분리된 원본(Clean) 스템만 저장함.
+        
+        :return: 처리된 오디오 데이터 (NumPy 배열)
+        :raises ImportError: pedalboard 라이브러리가 설치되지 않은 경우 발생
         """
-        if not os.path.exists(input_path):
-            raise FileNotFoundError(f"File not found: {input_path}")
-
-        print(f"▶ Vocal Processing: {input_path} (Preset: {preset})")
-
-        raw_vocal = None
-        sr = 44100  # fallback 기본 sr
-
-        # -------------------------------------------------
-        # 1. Demucs로 보컬 stem 추출 시도
-        # -------------------------------------------------
-        if self.separator is not None:
-            try:
-        # core.load_audio 대신 soundfile로 직접 읽기
-                audio, sr = sf.read(input_path)
-        # audio shape 정리: (T,), (T, C), (C, T) 어떤 경우든 Demucs가 기대하는 (C, T)로 맞춤
-                if audio.ndim == 1:
-            # mono: (T,) -> (1, T)
-                    audio = audio[np.newaxis, :]
-                elif audio.ndim == 2 :
-            # (T, C) -> (C, T)
-                    audio = audio.T
-
-                print("  → audio 로드 완료, Demucs stem 분리 시도...")
-
-
-        # Demucs 메모리 분리기 사용
-                stems = self.separator.separate_memory(audio, shifts=0)
-
-                if isinstance(stems, dict) and "vocals" in stems:
-                    raw_vocal = stems["vocals"]
-                    sr = self.separator.sample_rate  # Demucs 모델 샘플레이트
-                    print("  ✓ Vocal stem 추출 완료 (Demucs)")
-                else:
-                    print("  ✗ 'vocals' stem 을 찾을 수 없음. 원본 사용으로 fallback.")
-
-            except Exception as e:
-                print(f"  ✗ Demucs 분리 중 에러 발생: {e}")
-
-
-        # -------------------------------------------------
-        # 2. 분리 실패 시, 입력 파일 전체를 보컬로 간주 (fallback)
-        # -------------------------------------------------
-        if raw_vocal is None:
-            print("  → fallback: 입력 파일을 그대로 보컬 소스로 사용합니다.")
-            raw_vocal, sr = sf.read(input_path)
-
-            # (T,) -> (1, T)
-            if raw_vocal.ndim == 1:
-                raw_vocal = raw_vocal[np.newaxis, :]
-
-            # (T, C) 형태면 (C, T)로 변경
-            if raw_vocal.ndim == 2 and raw_vocal.shape[0] < raw_vocal.shape[1]:
-                raw_vocal = raw_vocal.T
-
-        # -------------------------------------------------
-        # 3. Vocal FX Rack 설정 (preset + randomize)
-        # -------------------------------------------------
-        self.fx_rack.load_preset(preset)
-
-        if seed is not None:
-            self.fx_rack.randomize_parameters(seed)
-
-        # -------------------------------------------------
-        # 4. 이펙트 체인 적용
-        # -------------------------------------------------
-        processed = self.fx_rack.process(raw_vocal, sr)
-
-        # (C, T) → (T, C) 로 바꿔서 저장
-        if processed.ndim == 2 and processed.shape[0] < processed.shape[1]:
-            processed_to_write = processed.T
+        try:
+            from pedalboard.io import AudioFile
+        except ImportError:
+            raise ImportError(
+                "Pedalboard is not installed. Please install it with:\n"
+                "pip install pedalboard"
+            )
+        
+        # 오디오 파일 로드
+        print(f"Loading audio from: {input_path}")
+        with AudioFile(str(input_path)) as f:
+            audio = f.read(f.frames)
+            sample_rate = f.samplerate
+        
+        # 파이프라인 실행
+        if save_separated_only:
+            processed = self.process(audio, sample_rate, apply_effects=False)
         else:
-            processed_to_write = processed
+            processed = self.process(audio, sample_rate, apply_effects=apply_effects)
+        
+        # 파일로 저장
+        if output_path is not None:
+            with AudioFile(
+                str(output_path),
+                'w',
+                sample_rate,
+                processed.shape[0]
+            ) as f:
+                f.write(processed)
+            print(f"Processed audio saved to: {output_path}")
+        
+        return processed
+    
+    def batch_process(
+        self,
+        input_files: list,
+        output_dir: Union[str, Path],
+        apply_effects: bool = True,
+        randomize_effects: bool = False
+    ):
+        """
+        여러 오디오 파일을 일괄 처리(Batch Processing)함.
 
-        sf.write(output_path, processed_to_write, sr)
-        print(f"  ✓ 결과 저장: {output_path}")
+        :param input_files: 입력 파일 경로들의 리스트
+        :param output_dir: 결과 파일을 저장할 디렉토리 경로
+        :param apply_effects: 이펙트 적용 여부
+        :param randomize_effects: True일 경우 각 파일마다 랜덤한 이펙트 파라미터를 적용함 (데이터 증강 등에 활용 가능).
+        """
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        for i, input_file in enumerate(input_files):
+            input_path = Path(input_file)
+            output_path = output_dir / f"{input_path.stem}_vocal_processed{input_path.suffix}"
+            
+            print(f"\n[{i+1}/{len(input_files)}] Processing: {input_path.name}")
+            
+            try:
+                if randomize_effects and apply_effects:
+                    # 랜덤 이펙트 사용 (VocalRack supports randomize_parameters)
+                    try:
+                        from pedalboard.io import AudioFile
+                    except ImportError:
+                        raise ImportError("Pedalboard is not installed.")
+                    
+                    with AudioFile(str(input_path)) as f:
+                        audio = f.read(f.frames)
+                        sample_rate = f.samplerate
+                    
+                    # 분리
+                    vocal_audio = self.separator.separate(audio, sample_rate)
+                    
+                    # 랜덤 이펙트 적용
+                    self.fx_rack.randomize_parameters() # seed?
+                    processed = self.fx_rack.process(vocal_audio, sample_rate)
+                    print(f"  Applied randomized effects.")
+                    
+                    # 저장
+                    with AudioFile(str(output_path), 'w', sample_rate, processed.shape[0]) as f:
+                        f.write(processed)
+                else:
+                    # 일반 처리
+                    self.process_file(input_path, output_path, apply_effects=apply_effects)
+                    
+                print(f"  ✓ Saved to: {output_path}")
+                
+            except Exception as e:
+                print(f"  ✗ Error processing {input_path.name}: {e}")
 
 
+def process_vocal_from_mix(
+    audio: np.ndarray,
+    sample_rate: int,
+    apply_effects: bool = True,
+    effect_preset: str = "default",
+    separation_model: str = "htdemucs_6s",
+    device: Optional[str] = None,
+    **effect_params
+) -> np.ndarray:
+    """
+    [편의 함수] 믹스 오디오에서 보컬을 분리하고 이펙트를 적용함.
+    
+    VocalPipeline 클래스를 직접 인스턴스화하지 않고, 함수 호출 한 번으로 처리를 수행하고 싶을 때 유용함.
+
+    :param audio: 입력 믹스 오디오 데이터 (NumPy 배열)
+    :param sample_rate: 샘플 레이트 (Hz)
+    :param apply_effects: 이펙트 적용 여부 (기본값: True)
+    :param effect_preset: 적용할 이펙트 프리셋 이름
+    :param separation_model: 사용할 Demucs 모델 이름
+    :param device: 연산 장치 ('cuda' 또는 'cpu')
+    :param effect_params: 추가 이펙트 파라미터
+    
+    :return: 처리된 보컬 오디오 데이터 (NumPy 배열)
+    """
+    pipeline = VocalPipeline(
+        separation_model=separation_model,
+        device=device,
+        effect_preset=effect_preset,
+        **effect_params
+    )
+    
+    return pipeline.process(audio, sample_rate, apply_effects=apply_effects)

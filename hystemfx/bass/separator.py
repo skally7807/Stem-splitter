@@ -1,16 +1,16 @@
 """
-Vocal Separator Module
-보컬 분리 모듈
+Bass Separator Module
+베이스 분리 모듈
 """
 
 import numpy as np
 from typing import Optional, Union, Dict
 from hystemfx.core.separator import DemucsSeparator
 
-class VocalSeparator(DemucsSeparator):
+class BassSeparator(DemucsSeparator):
     """
-    보컬 분리 전용 클래스임.
-    DemucsSeparator를 상속받아 'vocals' 스템을 추출함.
+    베이스 분리 전용 클래스임.
+    DemucsSeparator를 상속받아 'bass' 스템을 추출함.
     """
     
     def __init__(self, model_name: str = "htdemucs_6s", device: Optional[str] = None):
@@ -22,7 +22,7 @@ class VocalSeparator(DemucsSeparator):
             device (str): 실행 디바이스 ('cuda', 'cpu' 등)
         """
         super().__init__(device=device)
-        self.target_stem = "vocals"
+        self.target_stem = "bass"
 
     def separate(
         self, 
@@ -31,7 +31,7 @@ class VocalSeparator(DemucsSeparator):
         return_all_stems: bool = False
     ) -> Union[np.ndarray, Dict[str, np.ndarray]]:
         """
-        오디오에서 보컬 성분을 분리함.
+        오디오에서 베이스 성분을 분리함.
         
         Parameters:
             audio (np.ndarray): 입력 오디오 배열
@@ -39,7 +39,7 @@ class VocalSeparator(DemucsSeparator):
             return_all_stems (bool): True일 경우 모든 스템을 딕셔너리로 반환함.
             
         Returns:
-            np.ndarray: 분리된 보컬 오디오 (return_all_stems=False)
+            np.ndarray: 분리된 베이스 오디오 (return_all_stems=False)
             Dict[str, np.ndarray]: 모든 스템 (return_all_stems=True)
         """
         stems = self.separate_memory(audio)
@@ -53,13 +53,13 @@ class VocalSeparator(DemucsSeparator):
             print(f"Warning: '{self.target_stem}' stem not found. Returning 'other' instead.")
             return stems.get("other", audio)
 
-def separate_vocal(
+def separate_bass(
     audio: np.ndarray, 
     sample_rate: int, 
     device: Optional[str] = None
 ) -> np.ndarray:
     """
-    편의 함수: 보컬 분리함.
+    편의 함수: 베이스 분리함.
     
     Parameters:
         audio (np.ndarray): 입력 오디오
@@ -67,7 +67,7 @@ def separate_vocal(
         device (str): 디바이스
         
     Returns:
-        np.ndarray: 분리된 보컬 오디오
+        np.ndarray: 분리된 베이스 오디오
     """
-    separator = VocalSeparator(device=device)
+    separator = BassSeparator(device=device)
     return separator.separate(audio, sample_rate)

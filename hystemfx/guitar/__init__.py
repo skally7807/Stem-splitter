@@ -1,9 +1,15 @@
 from .effects import GuitarEffectsChain
+from .separator import GuitarSeparator, separate_guitar
+from .pipeline import GuitarPipeline, process_guitar_from_mix
 from pedalboard import Pedalboard, NoiseGate, Compressor, Distortion, Reverb, Gain, Limiter
 
 __all__ = [
     "GuitarEffectsChain",
-    "get_default_chain"
+    "get_default_chain",
+    "GuitarSeparator",
+    "separate_guitar",
+    "GuitarPipeline",
+    "process_guitar_from_mix"
 ]
 
 def get_default_chain():
