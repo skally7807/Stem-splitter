@@ -3,8 +3,6 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
-import sphinx_rtd_theme
-
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -13,6 +11,18 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+autodoc_mock_imports = [
+    "numpy", 
+    "pandas", 
+    "scipy", 
+    "librosa", 
+    "torch", 
+    "torchaudio",
+    "demucs",
+    "openunmix",
+    "soundfile", 
+    "matplotlib",
+]
 
 project = 'hystemfx'
 copyright = '2025, HystemFX'
@@ -36,5 +46,5 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'sphinx_rtd_theme'
-html_static_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme = 'furo'
+html_static_path = ['_static']
