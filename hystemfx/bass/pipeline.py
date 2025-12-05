@@ -1,8 +1,8 @@
 """
-Synth/Piano/Keyboard Processing Pipeline
-신디사이저, 피아노, 키보드 분리 및 이펙트 처리 통합 파이프라인
+Bass Processing Pipeline
+베이스 분리 및 이펙트 처리 통합 파이프라인
 
-이 모듈은 전체 믹스 오디오에서 신디사이저(피아노, 키보드 포함) 성분을 분리하고,
+이 모듈은 전체 믹스 오디오에서 베이스 성분을 분리하고,
 설정된 이펙트 체인을 적용하여 최종 결과물을 생성하는 파이프라인을 제공합니다.
 """
 
@@ -10,13 +10,12 @@ import numpy as np
 from typing import Optional, Union, Dict
 from pathlib import Path
 
-from .separator import SynthSeparator, separate_synth
-from .effects import SynthEffectsChain, RandomizedSynthEffects, apply_synth_effects
+from .separator import BassSeparator, separate_bass
+from .effects import BassRack
 
-
-class SynthPipeline:
+class BassPipeline:
     """
-    완전한 신디사이저/피아노/키보드 처리 파이프라인 클래스.
+    완전한 베이스 처리 파이프라인 클래스.
     
     음원 분리(Separation)부터 이펙트 적용(Effect Processing)까지의 전체 워크플로우를 관리합니다.
     단일 파일 처리, 메모리 상의 오디오 처리, 배치 처리를 모두 지원합니다.
@@ -30,16 +29,17 @@ class SynthPipeline:
         **effect_params
     ):
         """
-        SynthPipeline 인스턴스를 초기화합니다.
+        BassPipeline 인스턴스를 초기화합니다.
 
         :param separation_model: 사용할 Demucs 모델 이름 (기본값: "htdemucs_6s")
         :param device: 연산에 사용할 디바이스 ('cuda', 'cpu' 또는 None). None일 경우 자동 선택됩니다.
-        :param effect_preset: 적용할 이펙트 프리셋 이름 ("default", "bright", "warm", "spacious", "tight" 등)
+        :param effect_preset: 적용할 이펙트 프리셋 이름 ("default", "vintage", "modern", "fuzz" 등)
         :param effect_params: 이펙트 체인에 전달할 추가 파라미터들
         """
-        self.separator = SynthSeparator(model_name=separation_model, device=device)
+        self.separator = BassSeparator(model_name=separation_model, device=device)
         self.effect_preset = effect_preset
         self.effect_params = effect_params
+        self.fx_rack = BassRack(preset=effect_preset)
         
     def process(
         self,
@@ -51,37 +51,35 @@ class SynthPipeline:
         """
         메모리 상의 오디오 데이터에 대해 파이프라인을 실행합니다.
         
-        1. Demucs를 사용하여 믹스에서 신디사이저/피아노 트랙을 분리합니다.
+        1. Demucs를 사용하여 믹스에서 베이스 트랙을 분리합니다.
         2. (옵션) 분리된 트랙에 이펙트 체인을 적용합니다.
 
         :param audio: 입력 오디오 데이터 (NumPy 배열, shape: [channels, samples] 또는 [samples])
         :param sample_rate: 오디오의 샘플 레이트 (Hz)
         :param apply_effects: 이펙트 체인을 적용할지 여부 (기본값: True)
-        :param return_all_stems: True일 경우, 분리된 모든 스템(드럼, 베이스 등 포함)을 딕셔너리로 반환합니다.
+        :param return_all_stems: True일 경우, 분리된 모든 스템을 딕셔너리로 반환합니다.
         
-        :return: 처리된 신디사이저 오디오 배열, 또는 모든 스템이 포함된 딕셔너리
+        :return: 처리된 베이스 오디오 배열, 또는 모든 스템이 포함된 딕셔너리
         """
-        print("Step 1/2: Separating synth/piano/keyboard from mix...")
+        print("Step 1/2: Separating bass from mix...")
         
         # 음원 분리
         if return_all_stems:
             stems = self.separator.separate(audio, sample_rate, return_all_stems=True)
-            synth_audio = stems["piano"]
+            bass_audio = stems["bass"]
         else:
-            synth_audio = self.separator.separate(audio, sample_rate, return_all_stems=False)
+            bass_audio = self.separator.separate(audio, sample_rate, return_all_stems=False)
         
         # 이펙트 적용
         if apply_effects:
             print("Step 2/2: Applying effects chain...")
-            processed = apply_synth_effects(
-                synth_audio,
-                sample_rate,
-                preset=self.effect_preset,
-                **self.effect_params
-            )
+            # BassRack uses load_preset and process method
+            self.fx_rack.load_preset(self.effect_preset)
+            # BassRack.process takes (audio, sample_rate)
+            processed = self.fx_rack.process(bass_audio, sample_rate)
             
             if return_all_stems:
-                stems["piano_processed"] = processed
+                stems["bass_processed"] = processed
                 return stems
             else:
                 return processed
@@ -89,7 +87,7 @@ class SynthPipeline:
             if return_all_stems:
                 return stems
             else:
-                return synth_audio
+                return bass_audio
     
     def process_file(
         self,
@@ -160,18 +158,15 @@ class SynthPipeline:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         
-        if randomize_effects:
-            randomizer = RandomizedSynthEffects()
-        
         for i, input_file in enumerate(input_files):
             input_path = Path(input_file)
-            output_path = output_dir / f"{input_path.stem}_synth_processed{input_path.suffix}"
+            output_path = output_dir / f"{input_path.stem}_bass_processed{input_path.suffix}"
             
             print(f"\n[{i+1}/{len(input_files)}] Processing: {input_path.name}")
             
             try:
                 if randomize_effects and apply_effects:
-                    # 랜덤 이펙트 사용
+                    # 랜덤 이펙트 사용 (BassRack supports randomize_parameters)
                     try:
                         from pedalboard.io import AudioFile
                     except ImportError:
@@ -182,11 +177,12 @@ class SynthPipeline:
                         sample_rate = f.samplerate
                     
                     # 분리
-                    synth_audio = self.separator.separate(audio, sample_rate)
+                    bass_audio = self.separator.separate(audio, sample_rate)
                     
                     # 랜덤 이펙트 적용
-                    processed, params = randomizer.process(synth_audio, sample_rate)
-                    print(f"  Applied randomized effects with params: {params}")
+                    self.fx_rack.randomize_parameters() # seed?
+                    processed = self.fx_rack.process(bass_audio, sample_rate)
+                    print(f"  Applied randomized effects.")
                     
                     # 저장
                     with AudioFile(str(output_path), 'w', sample_rate, processed.shape[0]) as f:
@@ -201,7 +197,7 @@ class SynthPipeline:
                 print(f"  ✗ Error processing {input_path.name}: {e}")
 
 
-def process_synth_from_mix(
+def process_bass_from_mix(
     audio: np.ndarray,
     sample_rate: int,
     apply_effects: bool = True,
@@ -211,9 +207,9 @@ def process_synth_from_mix(
     **effect_params
 ) -> np.ndarray:
     """
-    [편의 함수] 믹스 오디오에서 신디사이저/피아노를 분리하고 이펙트를 적용합니다.
+    [편의 함수] 믹스 오디오에서 베이스를 분리하고 이펙트를 적용합니다.
     
-    SynthPipeline 클래스를 인스턴스화하지 않고 빠르게 처리하고 싶을 때 사용하세요.
+    BassPipeline 클래스를 인스턴스화하지 않고 빠르게 처리하고 싶을 때 사용하세요.
 
     :param audio: 입력 믹스 오디오 데이터
     :param sample_rate: 샘플 레이트
@@ -225,7 +221,7 @@ def process_synth_from_mix(
     
     :return: 처리된 오디오 데이터
     """
-    pipeline = SynthPipeline(
+    pipeline = BassPipeline(
         separation_model=separation_model,
         device=device,
         effect_preset=effect_preset,
