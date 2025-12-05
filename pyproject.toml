@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Audio source separation and effect processing library"
 readme = "README.md"
 requires-python = ">=3.9"
+license = { file = "LICENSE" }
 dependencies = [
     "demucs>=4.0.1",
     "librosa>=0.11.0",
@@ -14,7 +15,6 @@ dependencies = [
     "torchaudio",
 ]
 
-# 👇 이 부분이 새로 추가된 핵심이야 (빌드 설정)
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
