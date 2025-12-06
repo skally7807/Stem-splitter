@@ -312,8 +312,10 @@ python -m unittest tests.test_fx_determinism
 
 Core Separator 계약만:
 python -m unittest tests.test_core_separator_contract
+```
 
-3. 테스트 해석 팁
+### 3. 테스트 해석 팁
+
 
 Synth / Guitar 테스트 실패
 → 대부분 입력 shape 핸들링, preset 이름 오타, pedalboard 파라미터 범위 문제일 가능성이 높음.
