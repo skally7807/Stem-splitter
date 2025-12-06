@@ -49,7 +49,6 @@ NOTES.md
 # Development Tools
 # -----------------------------------------------------------------------------
 uv.lock
-pyproject.toml
 .pytest_cache/
 .coverage
 htmlcov/
@@ -76,3 +75,9 @@ htmlcov/
 # Python cache
 __pycache__/
 *.pyc
+
+
+# ---
+# 결과 파일들
+# ---
+demo_output/
