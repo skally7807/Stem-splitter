@@ -31,6 +31,56 @@
 
 > **License Notice**: 본 프로젝트는 **GPL-3.0** 라이선스를 따르는 `spotify/pedalboard`를 포함하고 있으므로, 전체 프로젝트 또한 GPL-3.0 라이선스 정책을 준수함.
 
+## Quickstart
+
+HystemFX를 빠르게 시작하기 위한 예제입니다. 전체 파이프라인을 실행하거나, 개별 Stem에 이펙트를 적용하는 방법을 확인할 수 있습니다.
+
+### 1. Full Pipeline 예제 (Mix -> Stems -> Effects)
+
+오디오 파일을 입력받아 Stem 분리 후 각 세션별 이펙트를 적용하는 전체 과정입니다.
+
+```python
+from hystemfx.pipeline import run_pipeline
+from pedalboard import Pedalboard, Distortion, Reverb
+
+# 커스텀 기타 이펙트 체인 정의 (선택 사항)
+# 사용자가 직접 Pedalboard 객체를 생성하여 주입할 수 있습니다.
+custom_guitar = Pedalboard([
+    Distortion(drive_db=15.0),
+    Reverb(room_size=0.5)
+])
+
+# 파이프라인 실행
+results = run_pipeline(
+    input_path="mixed.wav",       # 입력 파일 경로
+    output_dir="demo_output",     # 출력 디렉토리
+    vocal_preset="bright",        # 보컬 프리셋
+    synth_preset="warm",          # 신스 프리셋
+    guitar_preset=custom_guitar,  # 커스텀 기타 체인 적용
+    bass_preset="vintage"         # 베이스 프리셋
+)
+
+print("Generated Files:", results)
+```
+
+### 2. Single Stem Processing 예제
+
+이미 분리된 Stem 파일에 대해 특정 세션의 이펙트만 적용하는 방법입니다.
+
+```python
+from hystemfx.pipeline import process_stem
+
+# 단일 Stem 처리
+process_stem(
+    input_path="vocals_raw.wav",
+    output_path="vocals_processed.wav",
+    session_type="vocals",      # 세션 타입 지정 (vocals, guitar, bass, synth)
+    preset="radio",             # 적용할 프리셋
+    sr=44100
+)
+```
+
+
 ## 세션별 전처리 모듈
 
 각 섹션에서는 세션의 고유한 음향적 특성을 기반으로 어떤 preprocessing filter를 설계했는지를 설명한다.

@@ -10,7 +10,6 @@ dependencies = [
     "librosa>=0.11.0",
     "numpy<2.0",
     "pedalboard>=0.9.19",
-    "sphinx>=7.4.7",
     "torch",
     "torchaudio",
 ]
@@ -21,3 +20,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["hystemfx"]
+
+[dependency-groups]
+dev = [
+    "furo>=2025.9.25",
+    "sphinx>=7.4.7",
+]
