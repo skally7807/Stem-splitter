@@ -322,3 +322,67 @@ pipeline.process_file(
 ```
 
 상세한 사용 예제는 `hystemfx/synth/example.py`를 참조.
+
+
+
+---
+
+## 테스트 가이드 (Tests)
+
+본 프로젝트는 Stem 분리 및 세션별 FX 체인이 **의도한 대로 동작하는지**를 보장하기 위해  
+`tests/` 디렉터리에 단위 테스트(unittest)를 포함하고 있다.
+
+### 1. 테스트 파일 개요
+
+| 파일 | 설명 |
+| :--- | :--- |
+| `tests/test_synth_effects_chain.py` | Synth 세션용 이펙트 체인의 **입력/출력 shape 계약**과 preset 동작을 검증. (mono/stereo, (C, T) / (T, C) 모두 처리 가능한지 확인) |
+| `tests/test_guitar_effects_chain.py` | Guitar FX Chain이 `clean / distortion / crunch` preset에서 에러 없이 동작하는지, `(T,)`, `(T, C)` 입력도 안전하게 처리하는지, `get_settings()`가 올바른 dict를 반환하는지 확인. |
+| `tests/test_fx_determinism.py` | `VocalRack`, `BassRack`의 `randomize_parameters(seed=...)`가 **같은 seed → 같은 출력**, **다른 seed → 다른 출력**이 되도록 결정성을 보장하는지 테스트. 모델 재현성(Reproducibility)을 확인하는 용도. |
+| `tests/test_core_separator_contract.py` | `DemucsSeparator`의 핵심 **API 계약(Contract)** 테스트. `separate_file()`이 `{"vocals", "guitar", "bass", "piano"}` 키를 가진 dict를 반환하는지, 각 stem이 `(C, T)` shape인지, `sample_rate == 44100`인지 등을 검증. |
+
+> 참고: `test_core_separator_contract.py`는 Demucs 모델을 실제로 로드하여 실행하므로,  
+> 처음 한 번은 모델 다운로드로 인해 시간이 오래 걸릴 수 있다.
+
+### 2. 테스트 실행 방법
+
+아래 명령어는 **프로젝트 루트(예: `Project/`)에서 실행**하는 것을 기준으로 한다.
+
+#### 2-1. 전체 테스트 실행
+
+```bash
+# Windows PowerShell 예시
+python -m unittest discover -s tests -p "test_*.py"
+
+
+Guitar FX 체인만:
+
+python -m unittest tests.test_guitar_effects_chain
+
+
+Determinism 테스트만:
+
+python -m unittest tests.test_fx_determinism
+
+
+Core Separator 계약만:
+python -m unittest tests.test_core_separator_contract
+```
+
+### 3. 테스트 해석 팁
+
+
+Synth / Guitar 테스트 실패
+→ 대부분 입력 shape 핸들링, preset 이름 오타, pedalboard 파라미터 범위 문제일 가능성이 높음.
+
+Determinism 테스트 실패
+→ randomize_parameters()에서 seed를 제대로 전달하지 않거나, 내부에서 추가적인 비결정적 연산이 있는 경우.
+
+Core Separator 계약 실패
+→ Demucs 출력 키 이름 변경, sample rate 변경, (T, C) ↔ (C, T) 전환 로직 오류 등을 의심해야 함.
+
+위 테스트들을 통과하면:
+
+세션별 FX 체인은 최소한 “입력/출력 계약 + preset 동작”이 보장되고,
+
+Separator Core는 팀이 합의한 표준 인터페이스를 지킨다는 것을 의미한다.
