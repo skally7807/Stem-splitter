@@ -15,7 +15,7 @@ hystemfx documentation
 주요 기능 (Features)
 --------------------
 
-* **Stem Separation**: 최신 Demucs 모델을 활용하여 드럼, 베이스, 기타, 보컬을 정교하게 분리합니다.
+* **Stem Separation**: Demucs 모델을 활용하여 신디사이저(또는 피아노), 베이스, 기타, 보컬을 분리합니다.
 * **Smart Effects Chain**: 각 악기(Stem)에 최적화된 이펙트 체인을 자동으로 적용합니다.
     * **Guitar**: Overdrive, Distortion, Chorus 등
     * **Bass**: Compressor, EQ 등
