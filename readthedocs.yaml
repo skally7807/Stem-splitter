@@ -6,7 +6,9 @@ build:
     python: "3.11" 
 # Build documentation in the specified format
 sphinx:
-  configuration: docs/source/conf.py 
+  configuration: docs/source/conf.py
+  builder: html
+  directory: docs/source/
 
 # Install necessary Python dependencies (if needed)
 python:
