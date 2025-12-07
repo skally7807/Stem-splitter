@@ -1,5 +1,5 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-![Python](https://img.shields.io/badge/python-3.13-3776AB.svg?style=flat&logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/python-3.11-3776AB.svg?style=flat&logo=python&logoColor=white)
 [![Demucs](https://img.shields.io/badge/Model-htdemucs__6t-4267B2?style=flat&logo=meta&logoColor=white)](https://github.com/facebookresearch/demucs)
 [![Pedalboard](https://img.shields.io/badge/Spotify-Pedalboard-1DB954?style=flat&logo=spotify&logoColor=white)](https://github.com/spotify/pedalboard)
 
@@ -14,10 +14,10 @@
 본 라이브러리는 다음 두 가지 핵심 단계로 구성된다:
 
 1. Stem Splitting (세션별 분리)
-작성예정
+`Demucs`를 활용하여 각 세션별로 오디오를 분리한다.
 
 2. FX Preprocessing (세션별 전처리 / 이펙터 체인 적용)
-작성 예정
+`pedalboard`를 이용해 미리 정의한 이펙터 체인을 각 세션 오디오에 적용한다.
 
 ## 사용 기술 및 라이선스 (Built With & Licenses)
 

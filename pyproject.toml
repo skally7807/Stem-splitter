@@ -5,6 +5,24 @@ description = "Audio source separation and effect processing library"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { file = "LICENSE" }
+
+authors = [
+    { name = "skally7807", email = "wltjd7807@hanyang.ac.kr" },
+    { name = "ksbong", email = "ksbong06@gmail.com" },
+    { name = "hyun-woo1", email = "doctor0514@naver.com" },
+    { name = "jinwuk206", email = "assa4677@gmail.com" },
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Multimedia :: Sound/Audio :: Analysis",
+
+]
+
 dependencies = [
     "demucs>=4.0.1",
     "librosa>=0.11.0",
@@ -13,6 +31,10 @@ dependencies = [
     "torch",
     "torchaudio",
 ]
+
+[project.urls]
+Homepage = "https://github.com/skally7807/Stem-splitter"
+Issues = "https://github.com/skally7807/Stem-splitter/issues"
 
 [build-system]
 requires = ["hatchling"]
