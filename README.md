@@ -1,7 +1,8 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-![Python](https://img.shields.io/badge/python-3.11-3776AB.svg?style=flat&logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/python-3.13-3776AB.svg?style=flat&logo=python&logoColor=white)
 [![Demucs](https://img.shields.io/badge/Model-htdemucs__6t-4267B2?style=flat&logo=meta&logoColor=white)](https://github.com/facebookresearch/demucs)
 [![Pedalboard](https://img.shields.io/badge/Spotify-Pedalboard-1DB954?style=flat&logo=spotify&logoColor=white)](https://github.com/spotify/pedalboard)
+[![Docs](https://img.shields.io/badge/docs-Sphinx-blue?style=flat)](https://stem-splitter.readthedocs.io/en/latest/)
 
 # Stem Splitting & FX Preprocessing
 

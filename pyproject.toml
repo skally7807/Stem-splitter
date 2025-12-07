@@ -26,7 +26,6 @@ classifiers = [
 dependencies = [
     "demucs>=4.0.1",
     "librosa>=0.11.0",
-    "numpy<2.0",
     "pedalboard>=0.9.19",
     "torch",
     "torchaudio",
@@ -35,6 +34,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/skally7807/Stem-splitter"
 Issues = "https://github.com/skally7807/Stem-splitter/issues"
+Documentation = "https://stem-splitter.readthedocs.io/en/latest/"
 
 [build-system]
 requires = ["hatchling"]
