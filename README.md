@@ -55,14 +55,16 @@ custom_guitar = Pedalboard([
 results = run_pipeline(
     input_path="mixed.wav",       # 입력 파일 경로
     output_dir="demo_output",     # 출력 디렉토리
-    vocal_preset="bright",        # 보컬 프리셋
-    synth_preset="warm",          # 신스 프리셋
-    guitar_preset=custom_guitar,  # 커스텀 기타 체인 적용
+    vocal_preset="bright",        # 보컬 프리셋 (문자열)
+    synth_preset="warm",          # 신스 프리셋 (문자열)
+    guitar_preset=custom_guitar,  # 커스텀 기타 체인 (Pedalboard 객체) - 모든 프리셋 인자에 적용 가능
     bass_preset="vintage"         # 베이스 프리셋
 )
 
 print("Generated Files:", results)
 ```
+
+> **Note**: `vocal_preset`, `guitar_preset` 등 모든 프리셋 인자에는 문자열 이름뿐만 아니라 `pedalboard.Pedalboard` 객체를 직접 전달하여 세밀하게 커스텀할 수 있습니다.
 
 ### 2. Single Stem Processing 예제
 

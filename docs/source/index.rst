@@ -20,6 +20,7 @@ hystemfx documentation
     * **Guitar**: Overdrive, Distortion, Chorus 등
     * **Bass**: Compressor, EQ 등
     * **Vocal**: Reverb, Delay 등
+    * **Customizable**: `pedalboard` 객체를 직접 전달하여 사용자 정의 이펙트 체인 적용 가능
 * **Easy Pipeline**: 단 몇 줄의 코드로 분리부터 마스터링까지 한 번에 처리합니다.
 
 API 문서 (Modules)

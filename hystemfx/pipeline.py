@@ -3,7 +3,11 @@ import sys
 import torch
 import numpy as np
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, Callable
+try:
+    from pedalboard import Pedalboard
+except ImportError:
+    Pedalboard = None
 
 # Add project root to sys.path if needed
 current_file_path = os.path.abspath(__file__)
@@ -33,7 +37,9 @@ def process_stem(
     :param input_path: 입력 스템 파일 경로
     :param output_path: 처리된 파일을 저장할 경로
     :param session_type: 세션 타입 ('vocals', 'guitar', 'piano', 'bass')
-    :param preset: 이펙트 프리셋 이름 또는 커스텀 이펙트 객체
+    :param session_type: 세션 타입 ('vocals', 'guitar', 'piano', 'bass')
+    :param preset: 이펙트 프리셋 이름(str) 또는 ``pedalboard.Pedalboard`` 객체
+    :param sr: 샘플 레이트 (기본값: 44100)
     :param sr: 샘플 레이트 (기본값: 44100)
     """
     print(f"- Processing stem: {session_type} ({input_path})")
@@ -75,6 +81,17 @@ def process_stem(
                 chain = GuitarEffectsChain(custom_board=preset)
             processed_audio = chain.process(audio, sr)
             
+            
+        # Check if preset is a Pedalboard object or callable (Universal support including Bass/Others)
+        elif hasattr(preset, "process") or callable(preset) or (Pedalboard and isinstance(preset, Pedalboard)):
+             # If it's a Pedalboard object, it is callable: board(audio, sample_rate)
+             # If it's our internal Wrapper, it has .process(audio, sr)
+             if hasattr(preset, "process"):
+                 processed_audio = preset.process(audio, sr)
+             else:
+                 # Assume it's a Pedalboard-like callable: func(audio, sr)
+                 processed_audio = preset(audio, sr)
+
         # Add other sessions if needed
         
     except Exception as e:
@@ -111,10 +128,10 @@ def run_pipeline(
     :param input_path: 입력 오디오 파일 경로 (믹스 파일)
     :param device: 연산 장치 ('cuda' 또는 'cpu'). None일 경우 자동 감지.
     :param output_dir: 결과 파일을 저장할 디렉토리 경로
-    :param vocal_preset: 보컬 이펙트 프리셋 이름
-    :param synth_preset: 신디사이저/피아노 이펙트 프리셋 이름
-    :param guitar_preset: 기타 이펙트 프리셋 이름
-    :param bass_preset: 베이스 이펙트 프리셋 이름
+    :param vocal_preset: 보컬 이펙트 프리셋 이름 또는 ``pedalboard.Pedalboard`` 객체
+    :param synth_preset: 신디사이저/피아노 이펙트 프리셋 이름 또는 ``pedalboard.Pedalboard`` 객체
+    :param guitar_preset: 기타 이펙트 프리셋 이름 또는 ``pedalboard.Pedalboard`` 객체
+    :param bass_preset: 베이스 이펙트 프리셋 이름 또는 ``pedalboard.Pedalboard`` 객체
     
     :return: 저장된 파일 경로들의 딕셔너리 (Key: 식별자, Value: 파일 경로)
     :raises FileNotFoundError: 입력 파일이 없을 경우
@@ -190,35 +207,53 @@ def run_pipeline(
         processed_audio = None
         
         try:
-            if stem_name == "vocals":
-                print(f"  > Processing Vocals (Preset: {vocal_preset})...")
-                rack = VocalRack(preset=vocal_preset)
-                processed_audio = rack.process(stem_audio, sr)
+            # Re-evaluating flow for run_pipeline loop:
+            current_preset = None
+            if stem_name == "vocals": current_preset = vocal_preset
+            elif stem_name == "piano": current_preset = synth_preset
+            elif stem_name == "guitar": current_preset = guitar_preset
+            elif stem_name == "bass": current_preset = bass_preset
 
-            elif stem_name == "piano":
-                print(f"  > Processing Synth/Piano (Preset: {synth_preset})...")
-                # Synth logic matching pipeline
-                chain_params = {}
-                if synth_preset == "bright":
-                    chain_params = {"eq_mid_gain_db": 3.0, "eq_high_gain_db": 2.5, "chorus_mix": 0.4}
-                elif synth_preset == "warm":
-                    chain_params = {"eq_low_gain_db": 1.5, "eq_mid_gain_db": 1.0, "eq_high_gain_db": -1.0}
-                
-                chain = SynthEffectsChain(**chain_params)
-                processed_audio = chain.process(stem_audio, sr)
-
-            elif stem_name == "guitar":
-                print(f"  > Processing Guitar (Preset: {guitar_preset if isinstance(guitar_preset, str) else 'Custom'})...")
-                if isinstance(guitar_preset, str):
-                    chain = GuitarEffectsChain(preset=guitar_preset)
-                else:
-                    chain = GuitarEffectsChain(custom_board=guitar_preset)
-                processed_audio = chain.process(stem_audio, sr)
+            # Check if it is a Pedalboard object (or callable processing chain)
+            # We assume custom objects passed from python have priority over string presets logic
+            is_custom_board = (Pedalboard and isinstance(current_preset, Pedalboard)) or (hasattr(current_preset, "__call__") and not isinstance(current_preset, str))
             
-            elif stem_name == "bass":
-                print(f"  > Processing Bass (Preset: {bass_preset})...")
-                rack = BassRack(preset=bass_preset)
-                processed_audio = rack.process(stem_audio, sr)
+            if is_custom_board:
+                 print(f"  > Processing {stem_name} (Custom Pedalboard)...")
+                 processed_audio = current_preset(stem_audio, sr)
+            
+            else:
+                # String preset or compatible internal logic
+                if stem_name == "vocals":
+                    print(f"  > Processing Vocals (Preset: {vocal_preset})...")
+                    rack = VocalRack(preset=vocal_preset)
+                    processed_audio = rack.process(stem_audio, sr)
+
+                elif stem_name == "piano":
+                    print(f"  > Processing Synth/Piano (Preset: {synth_preset})...")
+                    # Synth logic matching pipeline
+                    chain_params = {}
+                    if synth_preset == "bright":
+                        chain_params = {"eq_mid_gain_db": 3.0, "eq_high_gain_db": 2.5, "chorus_mix": 0.4}
+                    elif synth_preset == "warm":
+                        chain_params = {"eq_low_gain_db": 1.5, "eq_mid_gain_db": 1.0, "eq_high_gain_db": -1.0}
+                    
+                    chain = SynthEffectsChain(**chain_params)
+                    processed_audio = chain.process(stem_audio, sr)
+
+                elif stem_name == "guitar":
+                    print(f"  > Processing Guitar (Preset: {guitar_preset})...")
+                    # Guitar chain handles both string and board in __init__ but let's be safe
+                    if isinstance(guitar_preset, str):
+                        chain = GuitarEffectsChain(preset=guitar_preset)
+                    else:
+                        chain = GuitarEffectsChain(custom_board=guitar_preset)
+                    processed_audio = chain.process(stem_audio, sr)
+                
+                elif stem_name == "bass":
+                    print(f"  > Processing Bass (Preset: {bass_preset})...")
+                    rack = BassRack(preset=bass_preset)
+                    processed_audio = rack.process(stem_audio, sr)
                 
         except Exception as e:
             print(f"  ✗ Processing failed for {stem_name}: {e}")
